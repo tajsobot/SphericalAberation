@@ -16,19 +16,16 @@
 #include <vector>
 
 // ─── config ───────────────────────────────────────────────────────────────────
-
 constexpr int IMAGE_W    = 1024;
 constexpr int IMAGE_H    = 1024;
 constexpr int LOCAL_SIZE = 16;
 
 // ─── shader loaders ───────────────────────────────────────────────────────────
-
 static std::string readFile(const std::string& path) {
     std::ifstream f(path);
     if (!f.is_open()) { std::cerr << "cannot open: " << path << "\n"; std::exit(1); }
     std::ostringstream ss; ss << f.rdbuf(); return ss.str();
 }
-
 static GLuint compileComputeShader(const std::string& path) {
     std::string src = readFile(path);
     const char* cstr = src.c_str();
@@ -46,7 +43,6 @@ static GLuint compileComputeShader(const std::string& path) {
     glAttachShader(prog, shader); glLinkProgram(prog); glDeleteShader(shader);
     return prog;
 }
-
 static GLuint compileRasterShader(const char* vertSrc, const char* fragSrc) {
     auto compile = [](GLenum type, const char* src) {
         GLuint s = glCreateShader(type);
@@ -71,30 +67,30 @@ static GLuint compileRasterShader(const char* vertSrc, const char* fragSrc) {
 }
 
 // ─── fullscreen quad shaders (embedded strings, no extra files needed) ────────
+namespace {
+     static const char* QUAD_VERT = R"(
+    #version 430 core
+    out vec2 uv;
+    void main() {
+        // generate a clip-space triangle that covers the screen, no VBO needed
+        vec2 pos[3] = vec2[](vec2(-1,-1), vec2(3,-1), vec2(-1,3));
+        gl_Position = vec4(pos[gl_VertexID], 0.0, 1.0);
+        uv = pos[gl_VertexID] * 0.5 + 0.5;
+    }
+    )";
 
-static const char* QUAD_VERT = R"(
-#version 430 core
-out vec2 uv;
-void main() {
-    // generate a clip-space triangle that covers the screen, no VBO needed
-    vec2 pos[3] = vec2[](vec2(-1,-1), vec2(3,-1), vec2(-1,3));
-    gl_Position = vec4(pos[gl_VertexID], 0.0, 1.0);
-    uv = pos[gl_VertexID] * 0.5 + 0.5;
+    static const char* QUAD_FRAG = R"(
+    #version 430 core
+    in vec2 uv;
+    out vec4 fragColor;
+    uniform sampler2D u_tex;
+    void main() {
+        fragColor = texture(u_tex, uv);
+    }
+    )";
 }
-)";
-
-static const char* QUAD_FRAG = R"(
-#version 430 core
-in vec2 uv;
-out vec4 fragColor;
-uniform sampler2D u_tex;
-void main() {
-    fragColor = texture(u_tex, uv);
-}
-)";
 
 // ─── texture ──────────────────────────────────────────────────────────────────
-
 static GLuint createOutputTexture(int w, int h) {
     GLuint tex;
     glGenTextures(1, &tex);
@@ -107,7 +103,6 @@ static GLuint createOutputTexture(int w, int h) {
 }
 
 // ─── PNG save ─────────────────────────────────────────────────────────────────
-
 static void savePNG(GLuint tex, int w, int h, const std::string& path) {
     std::vector<float> floats(w * h * 4);
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -122,8 +117,8 @@ static void savePNG(GLuint tex, int w, int h, const std::string& path) {
     stbi_write_png(path.c_str(), w, h, 4, bytes.data(), w * 4);
     std::cout << "saved: " << path << "\n";
 }
-// ─── load input texture ───────────────────────────────────────────────────────
 
+// ─── load input texture ───────────────────────────────────────────────────────
 static GLuint loadInputTexture(const std::string& path) {
     int w, h, channels;
     stbi_set_flip_vertically_on_load(1);  // match OpenGL's bottom-left origin
@@ -148,7 +143,6 @@ static GLuint loadInputTexture(const std::string& path) {
 }
 
 // ─── main ─────────────────────────────────────────────────────────────────────
-
 int main() {
     // ── window ──
     glfwInit();
@@ -165,6 +159,8 @@ int main() {
     GLuint outputTex   = createOutputTexture(IMAGE_W, IMAGE_H);
     GLuint computeProg = compileComputeShader("../shaders/raytrace.comp");
     GLuint quadProg    = compileRasterShader(QUAD_VERT, QUAD_FRAG);
+    GLuint inputTex  = loadInputTexture("../input/arrow.jpg");
+
 
     // dummy VAO — required by core profile even if we don't use vertex buffers
     GLuint vao;
@@ -188,6 +184,12 @@ int main() {
     savePNG(outputTex, IMAGE_W, IMAGE_H, "../output/frame.png");
 
     // ── display loop — just keeps showing the same frame ──
+    float u_r = 1.0f;
+    float u_n = 1.5f;
+    float u_a = 1.0f;
+    float u_b = 1.0f;
+
+
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
@@ -195,17 +197,39 @@ int main() {
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
 
+        // adjust params with keys/save png
+        if (glfwGetKey(window, GLFW_KEY_UP)    == GLFW_PRESS) u_n += 0.01f;
+        if (glfwGetKey(window, GLFW_KEY_DOWN)  == GLFW_PRESS) u_n -= 0.01f;
+        if (glfwGetKey(window, GLFW_KEY_LEFT)  == GLFW_PRESS) {u_r -= 0.1f; std::cout << u_r;};
+        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {u_r += 0.1f; std::cout << u_r;};
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+            savePNG(outputTex, IMAGE_W, IMAGE_H, "../output/activeFrame.png");
+
+
+        // ── rerun compute every frame ──
+        glBindImageTexture(0, outputTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+        glUseProgram(computeProg);
+        glUniform1f(glGetUniformLocation(computeProg, "u_r"), u_r);
+        glUniform1f(glGetUniformLocation(computeProg, "u_n"), u_n);
+        glUniform1f(glGetUniformLocation(computeProg, "u_a"), u_a);
+        glUniform1f(glGetUniformLocation(computeProg, "u_b"), u_b);
+        glUniform2f(glGetUniformLocation(computeProg, "u_resolution"), IMAGE_W, IMAGE_H);
+        // glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT); //race condition, GPU waits before new writes
+
+
         int winW, winH;
         glfwGetFramebufferSize(window, &winW, &winH);
         glViewport(0, 0, winW, winH);
-
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // draw the compute output texture as a fullscreen quad
         glUseProgram(quadProg);
+
+        glBindTexture(GL_TEXTURE_2D, inputTex);
+        glUniform1i(glGetUniformLocation(computeProg, "u_input"), 1);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, outputTex);
         glUniform1i(glGetUniformLocation(quadProg, "u_tex"), 0);
+
         glDrawArrays(GL_TRIANGLES, 0, 3);  // 3 verts, no VBO
 
         glfwSwapBuffers(window);
