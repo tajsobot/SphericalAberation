@@ -8,6 +8,8 @@ add_executable(SphericalAberation src/main.cpp)
 set(SOURCES
         src/main.cpp
         src/glad.c
+        src/stb_image.h
+        src/stb_image_write.h
 )
 
 #glfw

@@ -1,0 +1,22 @@
+// shaders/raytrace.comp
+#version 430 core
+
+layout(local_size_x = 16, local_size_y = 16) in;
+layout(rgba32f, binding = 0) uniform image2D outputImage;
+
+uniform float u_r;           // sphere radius
+uniform float u_n;           // refractive index
+uniform float u_a;           // source plane distance
+uniform float u_b;           // screen distance
+uniform vec2  u_resolution;
+
+const float neke = 1.0;
+
+void main() {
+
+    ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    vec2 uv = vec2(coord) / u_resolution;
+    uv = uv * 2.0f;
+
+    imageStore(outputImage, coord, vec4(uv, 0.0, 1.0));
+}

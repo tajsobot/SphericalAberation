@@ -1,265 +1,222 @@
-#include <chrono>
-#include <iostream>
+// main.cpp
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <string>
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+// add at top
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"   // same vendor folder, grab from github.com/nothings/stb
+
+#include <iostream>
 #include <fstream>
 #include <sstream>
-#include <thread>
+#include <string>
+#include <vector>
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-    glViewport(0, 0, width, height);
+// ─── config ───────────────────────────────────────────────────────────────────
+
+constexpr int IMAGE_W    = 1024;
+constexpr int IMAGE_H    = 1024;
+constexpr int LOCAL_SIZE = 16;
+
+// ─── shader loaders ───────────────────────────────────────────────────────────
+
+static std::string readFile(const std::string& path) {
+    std::ifstream f(path);
+    if (!f.is_open()) { std::cerr << "cannot open: " << path << "\n"; std::exit(1); }
+    std::ostringstream ss; ss << f.rdbuf(); return ss.str();
 }
 
-bool fullscreen = false;
-int windowedX, windowedY, windowedWidth, windowedHeight;
-
-void toggleFullscreen(GLFWwindow* window) {
-    fullscreen = !fullscreen;
-
-    if (fullscreen) {
-        glfwGetWindowPos(window, &windowedX, &windowedY);
-        glfwGetWindowSize(window, &windowedWidth, &windowedHeight);
-
-        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-
-        //set fullscreen
-        glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
-    } else {
-        glfwSetWindowMonitor(window, nullptr, windowedX, windowedY, windowedWidth, windowedHeight, 0);
-    }
-}
-
-std::string readShaderFile(const std::string& filepath) {
-    std::ifstream file(filepath);
-    if (!file.is_open()) {
-        std::cerr << "ERROR: Unable to open shader file: " << filepath << std::endl;
-        return "";
-    }
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    return buffer.str();
-}
-
-unsigned int compileShader(unsigned int type, const std::string& source) {
-    unsigned int shader = glCreateShader(type);
-    const char* src = source.c_str();
-    glShaderSource(shader, 1, &src, nullptr);
+static GLuint compileComputeShader(const std::string& path) {
+    std::string src = readFile(path);
+    const char* cstr = src.c_str();
+    GLuint shader = glCreateShader(GL_COMPUTE_SHADER);
+    glShaderSource(shader, 1, &cstr, nullptr);
     glCompileShader(shader);
-
-    // Check for compilation errors
-    int success;
-    char infoLog[512];
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(shader, 512, nullptr, infoLog);
-        std::cerr << "ERROR: Shader Compilation Failed\n" << infoLog << std::endl;
+    GLint ok; glGetShaderiv(shader, GL_COMPILE_STATUS, &ok);
+    if (!ok) {
+        GLint len; glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
+        std::string log(len, '\0');
+        glGetShaderInfoLog(shader, len, nullptr, log.data());
+        std::cerr << "[compute] " << log << "\n"; std::exit(1);
     }
-    return shader;
+    GLuint prog = glCreateProgram();
+    glAttachShader(prog, shader); glLinkProgram(prog); glDeleteShader(shader);
+    return prog;
 }
 
-unsigned int createShaderProgram(const std::string& vertexSource, const std::string& fragmentSource) {
-    unsigned int vertexShader = compileShader(GL_VERTEX_SHADER, vertexSource);
-    unsigned int fragmentShader = compileShader(GL_FRAGMENT_SHADER, fragmentSource);
+static GLuint compileRasterShader(const char* vertSrc, const char* fragSrc) {
+    auto compile = [](GLenum type, const char* src) {
+        GLuint s = glCreateShader(type);
+        glShaderSource(s, 1, &src, nullptr);
+        glCompileShader(s);
+        GLint ok; glGetShaderiv(s, GL_COMPILE_STATUS, &ok);
+        if (!ok) {
+            GLint len; glGetShaderiv(s, GL_INFO_LOG_LENGTH, &len);
+            std::string log(len, '\0');
+            glGetShaderInfoLog(s, len, nullptr, log.data());
+            std::cerr << "[raster] " << log << "\n"; std::exit(1);
+        }
+        return s;
+    };
+    GLuint vert = compile(GL_VERTEX_SHADER,   vertSrc);
+    GLuint frag = compile(GL_FRAGMENT_SHADER, fragSrc);
+    GLuint prog = glCreateProgram();
+    glAttachShader(prog, vert); glAttachShader(prog, frag);
+    glLinkProgram(prog);
+    glDeleteShader(vert); glDeleteShader(frag);
+    return prog;
+}
 
-    unsigned int shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
+// ─── fullscreen quad shaders (embedded strings, no extra files needed) ────────
 
-    // Check for linking errors
-    int success;
-    char infoLog[512];
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, nullptr, infoLog);
-        std::cerr << "ERROR: Program Linking Failed\n" << infoLog << std::endl;
+static const char* QUAD_VERT = R"(
+#version 430 core
+out vec2 uv;
+void main() {
+    // generate a clip-space triangle that covers the screen, no VBO needed
+    vec2 pos[3] = vec2[](vec2(-1,-1), vec2(3,-1), vec2(-1,3));
+    gl_Position = vec4(pos[gl_VertexID], 0.0, 1.0);
+    uv = pos[gl_VertexID] * 0.5 + 0.5;
+}
+)";
+
+static const char* QUAD_FRAG = R"(
+#version 430 core
+in vec2 uv;
+out vec4 fragColor;
+uniform sampler2D u_tex;
+void main() {
+    fragColor = texture(u_tex, uv);
+}
+)";
+
+// ─── texture ──────────────────────────────────────────────────────────────────
+
+static GLuint createOutputTexture(int w, int h) {
+    GLuint tex;
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, w, h);
+    // linear filter so the quad draw looks nice if window is resized
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    return tex;
+}
+
+// ─── PNG save ─────────────────────────────────────────────────────────────────
+
+static void savePNG(GLuint tex, int w, int h, const std::string& path) {
+    std::vector<float> floats(w * h * 4);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, floats.data());
+
+    std::vector<unsigned char> bytes(w * h * 4);
+    for (int i = 0; i < w * h * 4; i++) {
+        float v = std::max(0.f, std::min(1.f, floats[i]));
+        bytes[i] = (unsigned char)(v * 255.f + 0.5f);
+    }
+    stbi_flip_vertically_on_write(1);
+    stbi_write_png(path.c_str(), w, h, 4, bytes.data(), w * 4);
+    std::cout << "saved: " << path << "\n";
+}
+// ─── load input texture ───────────────────────────────────────────────────────
+
+static GLuint loadInputTexture(const std::string& path) {
+    int w, h, channels;
+    stbi_set_flip_vertically_on_load(1);  // match OpenGL's bottom-left origin
+    unsigned char* data = stbi_load(path.c_str(), &w, &h, &channels, 4); // force RGBA
+    if (!data) {
+        std::cerr << "failed to load image: " << path << "\n";
+        std::exit(1);
     }
 
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    GLuint tex;
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    return shaderProgram;
+    stbi_image_free(data);
+    std::cout << "loaded: " << path << " (" << w << "x" << h << ")\n";
+    return tex;
 }
 
-// global  mouse position
-double mouseX = 0.0, mouseY = 0.0;
-
-// callback mouse movement
-void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-    mouseX = xpos;
-    mouseY = ypos;
-}
+// ─── main ─────────────────────────────────────────────────────────────────────
 
 int main() {
-    // Initialize GLFW
-    if (!glfwInit()) {
-        std::cerr << "ERROR: GLFW Initialization Failed\n";
-        return -1;
-    }
-    // Set GLFW window hints for OpenGL version and profile
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    // ── window ──
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-    float width = 1800.0f, height = 1300.0f;
-
-    // Create a windowed OpenGL context
-    GLFWwindow* window = glfwCreateWindow(width, height, "OpenGL Shader Example", nullptr, nullptr);
-    if (!window) {
-        std::cerr << "ERROR: GLFW Window Creation Failed\n";
-        glfwTerminate();
-        return -1;
-    }
-
+    GLFWwindow* window = glfwCreateWindow(IMAGE_W, IMAGE_H, "Spherical Aberration", nullptr, nullptr);
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(0); // Disable V-Sync
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
-    // Load OpenGL functions with GLAD
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cerr << "ERROR: GLAD Initialization Failed\n";
-        glfwTerminate();
-        return -1;
-    }
+    // ── resources ──
+    GLuint outputTex   = createOutputTexture(IMAGE_W, IMAGE_H);
+    GLuint computeProg = compileComputeShader("../shaders/raytrace.comp");
+    GLuint quadProg    = compileRasterShader(QUAD_VERT, QUAD_FRAG);
 
-    // mouse callback
-    glfwSetCursorPosCallback(window, mouse_callback);
+    // dummy VAO — required by core profile even if we don't use vertex buffers
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
 
-    // load shaders
-    std::string vertexShaderSource = readShaderFile("../src/vertex_shader.glsl");
+    // ── run compute once ──
+    glBindImageTexture(0, outputTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
-    std::vector<std::string> fragmentFilepaths = {
-        readShaderFile("../src/fragment_shader1.glsl"),
-        readShaderFile("../src/fragment_shader2.glsl"),
-        readShaderFile("../src/fragment_shader3.glsl"),
-        readShaderFile("../src/fragment_shader4.glsl"),
-        readShaderFile("../src/fragment_shader5.glsl")
+    glUseProgram(computeProg);
+    glUniform1f(glGetUniformLocation(computeProg, "u_r"), 1.0f);
+    glUniform1f(glGetUniformLocation(computeProg, "u_n"), 1.5f);
+    glUniform1f(glGetUniformLocation(computeProg, "u_a"), 5.0f);
+    glUniform1f(glGetUniformLocation(computeProg, "u_b"), 3.0f);
+    glUniform2f(glGetUniformLocation(computeProg, "u_resolution"), IMAGE_W, IMAGE_H);
 
-    };
+    glDispatchCompute(IMAGE_W / LOCAL_SIZE, IMAGE_H / LOCAL_SIZE, 1);
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
 
-    std::vector<unsigned int> shaderPrograms ={
-        createShaderProgram(vertexShaderSource, fragmentFilepaths[0]),
-        createShaderProgram(vertexShaderSource, fragmentFilepaths[1]),
-        createShaderProgram(vertexShaderSource, fragmentFilepaths[2]),
-        createShaderProgram(vertexShaderSource, fragmentFilepaths[3]),
-        createShaderProgram(vertexShaderSource, fragmentFilepaths[4])
-    };
+    // ── save immediately after compute ──
+    savePNG(outputTex, IMAGE_W, IMAGE_H, "../output/frame.png");
 
-
-    // Set up the VAO and VBO for a full-screen quad
-    float vertices[] = {
-        // Positions (x, y)    // Texture Coordinates (u, v)
-        -1.0f, -1.0f,          0.0f, 0.0f, // Bottom-left
-         1.0f, -1.0f,          1.0f, 0.0f, // Bottom-right
-         1.0f,  1.0f,          1.0f, 1.0f, // Top-right
-        -1.0f,  1.0f,          0.0f, 1.0f  // Top-left
-    };
-    unsigned int indices[] = {
-        0, 1, 2, // First triangle
-        2, 3, 0,  // Second triangle
-    };
-
-    unsigned int VAO, VBO, EBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
-
-    // Bind and set up VAO
-    glBindVertexArray(VAO);
-
-    // Bind and fill the VBO
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    // Bind and fill the EBO
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    // Define the vertex attribute pointers
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), static_cast<void *>(nullptr)); // Position attribute
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float))); // Texture coordinate attribute
-    glEnableVertexAttribArray(1);
-
-    // Unbind the VAO
-    glBindVertexArray(1);
-
-    float time1 = 0.0f;
-
-    using Clock = std::chrono::high_resolution_clock;
-    auto previousTime = Clock::now();
-
-    float deltaTime = 0.0f;
-    float timeCountTo1 = 0.0f;
-
-    unsigned int activeProgram = shaderPrograms[4];
-    int frameCount = 0;
-    // shader switching 1-4
+    // ── display loop — just keeps showing the same frame ──
     while (!glfwWindowShouldClose(window)) {
+        glfwPollEvents();
 
-        //izjemno
-        for (int i = 0; i < 9; ++i) {
-            if (glfwGetKey(window, GLFW_KEY_1 +i) == GLFW_PRESS) {
-              activeProgram = shaderPrograms[i];
-            }
-        }
+        // close on Escape
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+            glfwSetWindowShouldClose(window, true);
 
-
-        if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
-          std::cout << mouseX/width << " " << (height - mouseY)/height<< std::endl;
-        }
-
-        static bool pressed = false;
-        if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
-            if (!pressed) {
-                toggleFullscreen(window);
-                pressed = true;
-            }
-        } else {
-            pressed = false;
-        }
-
-        int width, height;
-        auto currentTime = Clock::now();
-        deltaTime = std::chrono::duration<float>(currentTime - previousTime).count();
-        previousTime = currentTime;
-
-        glfwGetFramebufferSize(window, &width, &height);
+        int winW, winH;
+        glfwGetFramebufferSize(window, &winW, &winH);
+        glViewport(0, 0, winW, winH);
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(activeProgram);
-
-        // Pass uniforms
-        glUniform1f(glGetUniformLocation(activeProgram, "u_time"), time1);
-        glUniform2f(glGetUniformLocation(activeProgram, "u_resolution"), width, height);
-        glUniform2f(glGetUniformLocation(activeProgram, "u_mouse"), mouseX, height - mouseY); // Flip Y-axis
-
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        // draw the compute output texture as a fullscreen quad
+        glUseProgram(quadProg);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, outputTex);
+        glUniform1i(glGetUniformLocation(quadProg, "u_tex"), 0);
+        glDrawArrays(GL_TRIANGLES, 0, 3);  // 3 verts, no VBO
 
         glfwSwapBuffers(window);
-        glfwPollEvents();
-        frameCount++;
-
-        if (timeCountTo1 >= 1.0f) {
-            std::cout << frameCount <<" FPS" << std::endl;
-            frameCount = 0;
-            timeCountTo1 = 0.0f;
-        }
-        time1 += 0.1f * deltaTime;
-        timeCountTo1 += deltaTime;
     }
 
-    // Clean up
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
-    glDeleteProgram(activeProgram);
-
+    // ── cleanup ──
+    glDeleteTextures(1, &outputTex);
+    glDeleteProgram(computeProg);
+    glDeleteProgram(quadProg);
+    glDeleteVertexArrays(1, &vao);
+    glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
 }
