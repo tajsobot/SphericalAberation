@@ -187,10 +187,10 @@ int main() {
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
 
-        if (glfwGetKey(window, GLFW_KEY_UP)    == GLFW_PRESS) u_n += 0.01f;
-        if (glfwGetKey(window, GLFW_KEY_DOWN)  == GLFW_PRESS) u_n -= 0.01f;
-        if (glfwGetKey(window, GLFW_KEY_LEFT)  == GLFW_PRESS) { u_r -= 0.01f; std::cout << u_r << std::endl; }
-        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) { u_r += 0.01f; std::cout << u_r << std::endl; }
+        if (glfwGetKey(window, GLFW_KEY_UP)    == GLFW_PRESS) {u_a += 0.01f; std::cout << "a:" << u_a << std::endl; }
+        if (glfwGetKey(window, GLFW_KEY_DOWN)  == GLFW_PRESS) {u_a -= 0.01f; std::cout << "a:" << u_a << std::endl; }
+        if (glfwGetKey(window, GLFW_KEY_LEFT)  == GLFW_PRESS) {u_r -= 0.01f; std::cout << "r:" << u_r << std::endl; }
+        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {u_r += 0.01f; std::cout << "r:" << u_r << std::endl;  }
         if (glfwGetKey(window, GLFW_KEY_S)     == GLFW_PRESS)
             savePNG(outputTex, IMAGE_W, IMAGE_H, "../output/activeFrame.png");
 
