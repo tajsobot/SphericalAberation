@@ -22,10 +22,10 @@ float intersectSphere(vec3 origin, vec3 dir, vec3 center, float r) {
     vec3 oc = origin - center;
     float a = 1.0;
     float b = 2.0 * dotProduct(dir, oc);
-    float c = dotProduct(oc, oc) - r;
+    float c = dotProduct(oc, oc) - r*r;
     //determinanta
     float D = b * b - 4 * a * c;
-    if (D > 0.0) return -1.0;
+    if (D < 0.0) return -1.0;
     //resevanje kvadratne enacbe
     float t1 = (-b - sqrt(D))/(2.0 * a);
     float t2 = (-b + sqrt(D))/(2.0 * a);
@@ -33,6 +33,10 @@ float intersectSphere(vec3 origin, vec3 dir, vec3 center, float r) {
     if (t1 > eps) return t1;
     if (t2 > eps) return t2;
     return -1.0;
+}
+
+float vectorDtance(vec3 a, vec3 b){
+    return sqrt(abs(dotProduct(a-b, a-b)));
 }
 
 void main() {
@@ -43,7 +47,7 @@ void main() {
     vec4 inputColor = texture(u_input, uv);
 
 
-    vec4 color_accumulator = vec4(1.0, 0.0, 0.0, 1.0);
+    vec4 color_accumulator = vec4(0.0, 0.0, 0.0, 0.0);
 
     //---------------------------------------------------------------------------------------------
     //cast ray
@@ -62,6 +66,22 @@ void main() {
     // P(t) = t * d + o
 
     float t_prvi = intersectSphere(rayOrigin, rayDir, lensPosCenter, u_r);
+    vec3 rayOriginNEW = t_prvi * rayDir + rayOrigin;
+    float distanceTraveled = vectorDtance(rayOriginNEW, rayOrigin);
+    if(t_prvi > 0.0){
+        color_accumulator.xyz += vec3(0.5, 0.0, 0.0);
+        //new ray:
+        vec3 rayDirNEW = vec3(0.0, 0.0, 1.0); //todo naredi lom
+
+    }
+    if(t_prvi < 0.0){
+        color_accumulator.xyz += vec3(1.0, 1.0, 1.0);
+    }
+
+    //template za tocko ki trofi screen
+    float t_plate_unaltered = (u_b - rayOrigin.z)/rayDir.z;
+    vec3 screenHit = t_plate_unaltered*rayDir + rayOrigin;
+    vec4 color = texture(u_input,screenHit.xy);
 
 
     //---------------------------------------------------------------------------------------------
@@ -74,6 +94,6 @@ void main() {
 
 
     //accumulate color
-    imageStore(outputImage, coord, color_accumulator * inputColor);
+    imageStore(outputImage, coord, color);
 
 }
