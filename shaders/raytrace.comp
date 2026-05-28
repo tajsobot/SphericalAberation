@@ -49,6 +49,5 @@ void main() {
 
 
     //accumulate color
-
-    imageStore(outputImage, coord, vec4(inputColor * abs(sin(105 * u_r * uv.x)) * abs(cos(105 * u_r * uv.y))));
+    imageStore(outputImage, coord, vec4(inputColor));
 }

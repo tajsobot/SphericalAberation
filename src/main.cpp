@@ -159,54 +159,44 @@ int main() {
     GLuint outputTex   = createOutputTexture(IMAGE_W, IMAGE_H);
     GLuint computeProg = compileComputeShader("../shaders/raytrace.comp");
     GLuint quadProg    = compileRasterShader(QUAD_VERT, QUAD_FRAG);
-    GLuint inputTex  = loadInputTexture("../input/arrow.jpg");
-
+    GLuint inputTex    = loadInputTexture("../input/arrow.jpg");
 
     // dummy VAO — required by core profile even if we don't use vertex buffers
     GLuint vao;
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
-    // ── run compute once ──
+    // ── run compute once (initial save) ──
     glBindImageTexture(0, outputTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-
     glUseProgram(computeProg);
     glUniform1f(glGetUniformLocation(computeProg, "u_r"), 1.0f);
+    glUniform1i(glGetUniformLocation(computeProg, "u_input"), 1);
     glUniform1f(glGetUniformLocation(computeProg, "u_n"), 1.5f);
     glUniform1f(glGetUniformLocation(computeProg, "u_a"), 5.0f);
     glUniform1f(glGetUniformLocation(computeProg, "u_b"), 3.0f);
     glUniform2f(glGetUniformLocation(computeProg, "u_resolution"), IMAGE_W, IMAGE_H);
-
     glDispatchCompute(IMAGE_W / LOCAL_SIZE, IMAGE_H / LOCAL_SIZE, 1);
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
-
-    // ── save immediately after compute ──
     savePNG(outputTex, IMAGE_W, IMAGE_H, "../output/frame.png");
 
-    // ── display loop — just keeps showing the same frame ──
-    float u_r = 1.0f;
-    float u_n = 1.5f;
-    float u_a = 1.0f;
-    float u_b = 1.0f;
-
+    float u_r = 1.0f, u_n = 1.5f, u_a = 1.0f, u_b = 1.0f;
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
-        // close on Escape
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
 
-        // adjust params with keys/save png
         if (glfwGetKey(window, GLFW_KEY_UP)    == GLFW_PRESS) u_n += 0.01f;
         if (glfwGetKey(window, GLFW_KEY_DOWN)  == GLFW_PRESS) u_n -= 0.01f;
-        if (glfwGetKey(window, GLFW_KEY_LEFT)  == GLFW_PRESS) {u_r -= 0.1f; std::cout << u_r;};
-        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {u_r += 0.1f; std::cout << u_r;};
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        if (glfwGetKey(window, GLFW_KEY_LEFT)  == GLFW_PRESS) { u_r -= 0.01f; std::cout << u_r << std::endl; }
+        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) { u_r += 0.01f; std::cout << u_r << std::endl; }
+        if (glfwGetKey(window, GLFW_KEY_S)     == GLFW_PRESS)
             savePNG(outputTex, IMAGE_W, IMAGE_H, "../output/activeFrame.png");
 
-
-        // ── rerun compute every frame ──
+        // ── FIX 1: set compute uniforms while computeProg is active ──
+        // glUniform* writes into whichever program is currently bound.
+        // All compute uniforms must be set before dispatching computeProg.
         glBindImageTexture(0, outputTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
         glUseProgram(computeProg);
         glUniform1f(glGetUniformLocation(computeProg, "u_r"), u_r);
@@ -214,29 +204,44 @@ int main() {
         glUniform1f(glGetUniformLocation(computeProg, "u_a"), u_a);
         glUniform1f(glGetUniformLocation(computeProg, "u_b"), u_b);
         glUniform2f(glGetUniformLocation(computeProg, "u_resolution"), IMAGE_W, IMAGE_H);
-        // glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT); //race condition, GPU waits before new writes
 
+        // ── FIX 2: actually dispatch the compute shader each frame ──
+        // Without this call the uniforms above are uploaded but nothing runs —
+        // outputTex never updates and you just keep seeing the initial frame.
+        glDispatchCompute(IMAGE_W / LOCAL_SIZE, IMAGE_H / LOCAL_SIZE, 1);
+
+        // Wait for compute writes to finish before the fragment shader samples outputTex.
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
 
         int winW, winH;
         glfwGetFramebufferSize(window, &winW, &winH);
         glViewport(0, 0, winW, winH);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(quadProg);
-
+        // ── FIX 3: bind textures to their correct units before setting uniforms ──
+        // glActiveTexture + glBindTexture must be called in order — the active unit
+        // at the time of glBindTexture determines which slot the texture lands in.
+        // inputTex goes to unit 1, outputTex to unit 0.
+        glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, inputTex);
-        glUniform1i(glGetUniformLocation(computeProg, "u_input"), 1);
+
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, outputTex);
-        glUniform1i(glGetUniformLocation(quadProg, "u_tex"), 0);
 
-        glDrawArrays(GL_TRIANGLES, 0, 3);  // 3 verts, no VBO
+        // ── FIX 1 (continued): set quad uniforms while quadProg is active ──
+        // u_input was previously being set against computeProg (wrong program).
+        // Switch to quadProg first, then upload both sampler uniforms.
+        glUseProgram(quadProg);
+        glUniform1i(glGetUniformLocation(quadProg, "u_tex"),   0); // outputTex on unit 0
+        glUniform1i(glGetUniformLocation(quadProg, "u_input"), 1); // inputTex  on unit 1
 
+        glDrawArrays(GL_TRIANGLES, 0, 3);
         glfwSwapBuffers(window);
     }
 
     // ── cleanup ──
     glDeleteTextures(1, &outputTex);
+    glDeleteTextures(1, &inputTex);
     glDeleteProgram(computeProg);
     glDeleteProgram(quadProg);
     glDeleteVertexArrays(1, &vao);
