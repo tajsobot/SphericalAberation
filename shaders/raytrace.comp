@@ -17,12 +17,25 @@ float dotProduct(vec3 a, vec3 b){
     return 1.0 * (a.x * b.x + a.y * b.y + a.z * b.z);
 }
 
+//todo
+vec3 refractRay(vec3 d, vec3 normal, float n1, float n2) {
+    float cosI  = -dot(normal, d);               // cos(θ1) — how aligned ray is with normal
+    float sinT2 = (n1/n2)*(n1/n2) * (1.0 - cosI*cosI); // sin²(θ2) via Snell's law
+
+    if (sinT2 > 1.0) return vec3(0.0);           // total internal reflection — no refracted ray
+
+    float cosT = sqrt(1.0 - sinT2);              // cos(θ2)
+
+    // assemble: tangential part + normal part
+    return (n1/n2)*d + (n1/n2*cosI - cosT)*normal;
+}
+
 float intersectSphere(vec3 origin, vec3 dir, vec3 center, float r) {
     float eps = 0.01;
     vec3 oc = origin - center;
     float a = 1.0;
     float b = 2.0 * dotProduct(dir, oc);
-    float c = dotProduct(oc, oc) - r*r;
+    float c = dotProduct(oc, oc) - r * r;
     //determinanta
     float D = b * b - 4 * a * c;
     if (D < 0.0) return -1.0;
@@ -66,21 +79,22 @@ void main() {
     // P(t) = t * d + o
 
     float t_prvi = intersectSphere(rayOrigin, rayDir, lensPosCenter, u_r);
-    vec3 rayOriginNEW = t_prvi * rayDir + rayOrigin;
-    float distanceTraveled = vectorDtance(rayOriginNEW, rayOrigin);
-    if(t_prvi > 0.0){
-        color_accumulator.xyz += vec3(0.5, 0.0, 0.0);
-        //new ray:
-        vec3 rayDirNEW = vec3(0.0, 0.0, 1.0); //todo naredi lom
+    vec3 sphereHit = t_prvi * rayDir + rayOrigin;
+    vec3 rayOriginNew = sphereHit;
+    vec3 surfaceNormal = vec3(0.0,0.0,0.0);
+    vec3 rayDirNew = vec3(0.0,0.0,0.0);
 
+    if(t_prvi > 0.0){
+        surfaceNormal = sphereHit - lensPosCenter; //normala na povrsino ko ray hit sfero 1.
+        rayDirNew = refractRay(rayDir, surfaceNormal, 1, u_n);
     }
     if(t_prvi < 0.0){
         color_accumulator.xyz += vec3(1.0, 1.0, 1.0);
     }
 
     //template za tocko ki trofi screen
-    float t_plate_unaltered = (u_b - rayOrigin.z)/rayDir.z;
-    vec3 screenHit = t_plate_unaltered*rayDir + rayOrigin;
+    float t_plate_unaltered = (u_b - rayOriginNew.z)/rayDirNew.z;
+    vec3 screenHit = t_plate_unaltered*rayDirNew + rayOriginNew;
     vec4 color = texture(u_input,screenHit.xy);
 
 
