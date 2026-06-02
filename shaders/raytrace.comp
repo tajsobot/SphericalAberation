@@ -78,25 +78,31 @@ void main() {
     // najde t prvega zadetka z sfero
     // P(t) = t * d + o
 
-    float t_prvi = intersectSphere(rayOrigin, rayDir, lensPosCenter, u_r);
-    vec3 sphereHit = t_prvi * rayDir + rayOrigin;
-    vec3 rayOriginNew = sphereHit;
-    vec3 surfaceNormal = vec3(0.0,0.0,0.0);
-    vec3 rayDirNew = vec3(0.0,0.0,0.0);
+    float t;
+    vec3 sphereHit;
+    vec3 surfaceNormal;
+    vec3 rayDirNew;
+    vec4 color;
+    int hitCount = 0;
 
-    if(t_prvi > 0.0){
-        surfaceNormal = sphereHit - lensPosCenter; //normala na povrsino ko ray hit sfero 1.
-        rayDirNew = refractRay(rayDir, surfaceNormal, 1, u_n);
+    for(int i = 0; i < 3; i++){
+        t = intersectSphere(rayOrigin, rayDir, lensPosCenter, u_r);
+        sphereHit = t * rayDir + rayOrigin;
+        surfaceNormal = sphereHit - lensPosCenter;
+        if(t > 0.0){
+            rayDir = refractRay(rayDir, surfaceNormal, 1, u_n);
+            rayOrigin = sphereHit;
+
+        }
+        else{
+            //template za tocko ki trofi screen
+            float t_plate_unaltered = (u_b - rayOrigin.z)/rayDir.z;
+            vec3 screenHit = t_plate_unaltered * rayDir + rayOrigin;
+            color = texture(u_input, screenHit.xy);
+        }
     }
-    if(t_prvi < 0.0){
-        color_accumulator.xyz += vec3(1.0, 1.0, 1.0);
-    }
 
-    //template za tocko ki trofi screen
-    float t_plate_unaltered = (u_b - rayOriginNew.z)/rayDirNew.z;
-    vec3 screenHit = t_plate_unaltered*rayDirNew + rayOriginNew;
-    vec4 color = texture(u_input,screenHit.xy);
-
+    color_accumulator.xyz += vec3(0.5, 0.5, 0.5);
 
     //---------------------------------------------------------------------------------------------
     //refraction
@@ -105,7 +111,6 @@ void main() {
     //---------------------------------------------------------------------------------------------
     //hits image
     //---------------------------------------------------------------------------------------------
-
 
     //accumulate color
     imageStore(outputImage, coord, color);
