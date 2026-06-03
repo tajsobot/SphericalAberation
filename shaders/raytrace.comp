@@ -12,6 +12,8 @@ uniform float u_b;           // screen distance
 uniform vec2  u_resolution;
 
 const float screenSize = 1.0;
+const float objectSize = 0.5;
+
 
 float dotProduct(vec3 a, vec3 b){
     return 1.0 * (a.x * b.x + a.y * b.y + a.z * b.z);
@@ -68,7 +70,7 @@ void main() {
 
     vec3 rayDir = vec3(0.0, 0.0, 1.0);
     vec3 rayOrigin = vec3(0.0 + uv.x * screenSize, 0.0 + uv.y * screenSize, 0.0);
-    vec3 lensPosCenter = vec3(0.5, 0.5, u_a);
+    vec3 lensPosCenter = vec3(screenSize/2.0, screenSize/2.0, u_a);
     vec3 imagePos = vec3(0.0, 0.0, u_b + u_a);
 
     //---------------------------------------------------------------------------------------------
@@ -85,24 +87,24 @@ void main() {
     vec4 color;
     int hitCount = 0;
 
-    for(int i = 0; i < 3; i++){
+    for(int i = 0; i < 2; i++){  // only 2 refractions needed
         t = intersectSphere(rayOrigin, rayDir, lensPosCenter, u_r);
-        sphereHit = t * rayDir + rayOrigin;
-        surfaceNormal = sphereHit - lensPosCenter;
-        if(t > 0.0){
-            rayDir = refractRay(rayDir, surfaceNormal, 1, u_n);
-            rayOrigin = sphereHit;
+        if(t <= 0.0) break;
 
-        }
-        else{
-            //template za tocko ki trofi screen
-            float t_plate_unaltered = (u_b - rayOrigin.z)/rayDir.z;
-            vec3 screenHit = t_plate_unaltered * rayDir + rayOrigin;
-            color = texture(u_input, screenHit.xy);
-        }
+        sphereHit = t * rayDir + rayOrigin;
+        surfaceNormal = normalize(sphereHit - lensPosCenter);
+        rayDir = refractRay(rayDir, surfaceNormal, i == 0 ? 1.0 : u_n, i == 0 ? u_n : 1.0);
+        rayOrigin = sphereHit;
     }
 
-    color_accumulator.xyz += vec3(0.5, 0.5, 0.5);
+    // sample screen after exiting the lens
+    float t_plate = (u_b - rayOrigin.z) / rayDir.z;
+    vec3 screenHit = t_plate * rayDir + rayOrigin;
+    if(screenHit.x >= 0.0 && screenHit.x <= objectSize && screenHit.y >= 0.0 && screenHit.y <= objectSize) //pogoj da trofi dejanso sliko ne pa neskonci plane
+    color = texture(u_input, screenHit.xy/objectSize);
+    else
+    color = vec4(0.0);
+
 
     //---------------------------------------------------------------------------------------------
     //refraction
