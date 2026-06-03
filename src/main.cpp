@@ -181,13 +181,15 @@ int main() {
     glUniform1f(glGetUniformLocation(computeProg, "u_yLensPos"), 0.0f);
     glUniform1f(glGetUniformLocation(computeProg, "u_yObjPos"), 0.0f);
     glUniform1f(glGetUniformLocation(computeProg, "u_yObjPos"), 0.0f);
+    glUniform1f(glGetUniformLocation(computeProg, "u_ObjScale"), 0.0f);
+
 
     glUniform2f(glGetUniformLocation(computeProg, "u_resolution"), IMAGE_W, IMAGE_H);
     glDispatchCompute(IMAGE_W / LOCAL_SIZE, IMAGE_H / LOCAL_SIZE, 1);
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
     savePNG(outputTex, IMAGE_W, IMAGE_H, "../output/frame.png");
 
-    float u_r = 1.0f, u_n = 1.5f, u_a = 5.0f, u_b = 5.0f, u_xLensPos = 0.0f, u_yLensPos = 0.0f, u_xObjPos = 0.0f, u_yObjPos = 0.0f;
+    float u_r = 1.0f, u_n = 1.5f, u_a = 5.0f, u_b = 5.0f, u_xLensPos = 0.0f, u_yLensPos = 0.0f, u_xObjPos = 0.0f, u_yObjPos = 0.0f, u_ObjScale = 1.0f;
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -195,9 +197,9 @@ int main() {
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
 
-        if (glfwGetKey(window, GLFW_KEY_UP)    == GLFW_PRESS) {u_a += 0.01f; std::cout << "a:" << u_a << std::endl; }
-        if (glfwGetKey(window, GLFW_KEY_DOWN)  == GLFW_PRESS) {u_a -= 0.01f; std::cout << "a:" << u_a << std::endl; }
-        if (glfwGetKey(window, GLFW_KEY_LEFT)  == GLFW_PRESS) {u_r -= 0.01f; std::cout << "r:" << u_r << std::endl; }
+        if (glfwGetKey(window, GLFW_KEY_UP)    == GLFW_PRESS) {u_a += 0.01f; std::cout << "a:" << u_a << std::endl;}
+        if (glfwGetKey(window, GLFW_KEY_DOWN)  == GLFW_PRESS) {u_a -= 0.01f; std::cout << "a:" << u_a << std::endl;}
+        if (glfwGetKey(window, GLFW_KEY_LEFT)  == GLFW_PRESS) {u_r -= 0.01f; std::cout << "r:" << u_r << std::endl;}
         if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {u_r += 0.01f; std::cout << "r:" << u_r << std::endl;}
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {u_xLensPos += 0.01f; std::cout << "x_lens:" << u_xLensPos << std::endl;}
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {u_xLensPos -= 0.01f; std::cout << "x_lens:" << u_xLensPos << std::endl;}
@@ -207,9 +209,11 @@ int main() {
         if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {u_xObjPos -= 0.01f; std::cout << "x_obj:" << u_xObjPos << std::endl;}
         if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {u_yObjPos += 0.01f; std::cout << "y_obj:" << u_yObjPos << std::endl;}
         if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {u_yObjPos -= 0.01f; std::cout << "y_obj:" << u_yObjPos << std::endl;}
+        if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {u_ObjScale += 0.01f; std::cout << "objScale:" << u_ObjScale << std::endl;}
+        if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {u_ObjScale -= 0.01f; std::cout << "objScale:" << u_ObjScale << std::endl;}
 
         if (glfwGetKey(window, GLFW_KEY_C)     == GLFW_PRESS)
-            savePNG(outputTex, IMAGE_W, IMAGE_H, "../output/activeFrame.png");
+            savePNG(outputTex, IMAGE_W, IMAGE_H, "../output/activeFrame.png"); //todo izpisi vse parametre za sliko
 
         // ── FIX 1: set compute uniforms while computeProg is active ──
         // glUniform* writes into whichever program is currently bound.
@@ -224,6 +228,8 @@ int main() {
         glUniform1f(glGetUniformLocation(computeProg, "u_yLensPos"), u_yLensPos);
         glUniform1f(glGetUniformLocation(computeProg, "u_xObjPos"), u_xObjPos);
         glUniform1f(glGetUniformLocation(computeProg, "u_yObjPos"), u_yObjPos);
+        glUniform1f(glGetUniformLocation(computeProg, "u_ObjScale"), u_ObjScale);
+
 
         glUniform2f(glGetUniformLocation(computeProg, "u_resolution"), IMAGE_W, IMAGE_H);
 
@@ -237,8 +243,28 @@ int main() {
 
         int winW, winH;
         glfwGetFramebufferSize(window, &winW, &winH);
+
+        // black bars
         glViewport(0, 0, winW, winH);
+        glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        // letterbox viewport
+        float target = (float)IMAGE_W / IMAGE_H;
+        float actual = (float)winW / winH;
+        int vpW, vpH, vpX, vpY;
+        if (actual > target) {
+            vpH = winH;
+            vpW = (int)(winH * target);
+            vpX = (winW - vpW) / 2;
+            vpY = 0;
+        } else {
+            vpW = winW;
+            vpH = (int)(winW / target);
+            vpX = 0;
+            vpY = (winH - vpH) / 2;
+        }
+        glViewport(vpX, vpY, vpW, vpH);
 
         // ── FIX 3: bind textures to their correct units before setting uniforms ──
         // glActiveTexture + glBindTexture must be called in order — the active unit
