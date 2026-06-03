@@ -172,17 +172,22 @@ int main() {
     // ── run compute once (initial save) ──
     glBindImageTexture(0, outputTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
     glUseProgram(computeProg);
-    glUniform1f(glGetUniformLocation(computeProg, "u_r"), 1.0f);
+    glUniform1f(glGetUniformLocation(computeProg, "u_r"), 0.0f);
     glUniform1i(glGetUniformLocation(computeProg, "u_input"), 1);
-    glUniform1f(glGetUniformLocation(computeProg, "u_n"), 1.5f);
-    glUniform1f(glGetUniformLocation(computeProg, "u_a"), 5.0f);
-    glUniform1f(glGetUniformLocation(computeProg, "u_b"), 3.0f);
+    glUniform1f(glGetUniformLocation(computeProg, "u_n"), 0.0f);
+    glUniform1f(glGetUniformLocation(computeProg, "u_a"), 0.0f);
+    glUniform1f(glGetUniformLocation(computeProg, "u_b"), 0.0f);
+    glUniform1f(glGetUniformLocation(computeProg, "u_xLensPos"), 0.0f);
+    glUniform1f(glGetUniformLocation(computeProg, "u_yLensPos"), 0.0f);
+    glUniform1f(glGetUniformLocation(computeProg, "u_yObjPos"), 0.0f);
+    glUniform1f(glGetUniformLocation(computeProg, "u_yObjPos"), 0.0f);
+
     glUniform2f(glGetUniformLocation(computeProg, "u_resolution"), IMAGE_W, IMAGE_H);
     glDispatchCompute(IMAGE_W / LOCAL_SIZE, IMAGE_H / LOCAL_SIZE, 1);
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
     savePNG(outputTex, IMAGE_W, IMAGE_H, "../output/frame.png");
 
-    float u_r = 0.3f, u_n = 1.5f, u_a = 0.3f, u_b = 4.0f;
+    float u_r = 1.0f, u_n = 1.5f, u_a = 5.0f, u_b = 5.0f, u_xLensPos = 0.0f, u_yLensPos = 0.0f, u_xObjPos = 0.0f, u_yObjPos = 0.0f;
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -193,8 +198,17 @@ int main() {
         if (glfwGetKey(window, GLFW_KEY_UP)    == GLFW_PRESS) {u_a += 0.01f; std::cout << "a:" << u_a << std::endl; }
         if (glfwGetKey(window, GLFW_KEY_DOWN)  == GLFW_PRESS) {u_a -= 0.01f; std::cout << "a:" << u_a << std::endl; }
         if (glfwGetKey(window, GLFW_KEY_LEFT)  == GLFW_PRESS) {u_r -= 0.01f; std::cout << "r:" << u_r << std::endl; }
-        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {u_r += 0.01f; std::cout << "r:" << u_r << std::endl;  }
-        if (glfwGetKey(window, GLFW_KEY_S)     == GLFW_PRESS)
+        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {u_r += 0.01f; std::cout << "r:" << u_r << std::endl;}
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {u_xLensPos += 0.01f; std::cout << "x_lens:" << u_xLensPos << std::endl;}
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {u_xLensPos -= 0.01f; std::cout << "x_lens:" << u_xLensPos << std::endl;}
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {u_yLensPos += 0.01f; std::cout << "y_lens:" << u_yLensPos << std::endl;}
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {u_yLensPos -= 0.01f; std::cout << "y_lens:" << u_yLensPos << std::endl;}
+        if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {u_xObjPos += 0.01f; std::cout << "x_obj:" << u_xObjPos << std::endl;}
+        if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {u_xObjPos -= 0.01f; std::cout << "x_obj:" << u_xObjPos << std::endl;}
+        if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {u_yObjPos += 0.01f; std::cout << "y_obj:" << u_yObjPos << std::endl;}
+        if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {u_yObjPos -= 0.01f; std::cout << "y_obj:" << u_yObjPos << std::endl;}
+
+        if (glfwGetKey(window, GLFW_KEY_C)     == GLFW_PRESS)
             savePNG(outputTex, IMAGE_W, IMAGE_H, "../output/activeFrame.png");
 
         // ── FIX 1: set compute uniforms while computeProg is active ──
@@ -206,6 +220,11 @@ int main() {
         glUniform1f(glGetUniformLocation(computeProg, "u_n"), u_n);
         glUniform1f(glGetUniformLocation(computeProg, "u_a"), u_a);
         glUniform1f(glGetUniformLocation(computeProg, "u_b"), u_b);
+        glUniform1f(glGetUniformLocation(computeProg, "u_xLensPos"), u_xLensPos);
+        glUniform1f(glGetUniformLocation(computeProg, "u_yLensPos"), u_yLensPos);
+        glUniform1f(glGetUniformLocation(computeProg, "u_xObjPos"), u_xObjPos);
+        glUniform1f(glGetUniformLocation(computeProg, "u_yObjPos"), u_yObjPos);
+
         glUniform2f(glGetUniformLocation(computeProg, "u_resolution"), IMAGE_W, IMAGE_H);
 
         // ── FIX 2: actually dispatch the compute shader each frame ──

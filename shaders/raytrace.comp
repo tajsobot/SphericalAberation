@@ -9,10 +9,15 @@ uniform float u_r;           // sphere radius
 uniform float u_n;           // refractive index
 uniform float u_a;           // source plane distance
 uniform float u_b;           // screen distance
+uniform float u_xLensPos;
+uniform float u_yLensPos;
+uniform float u_xObjPos;
+uniform float u_yObjPos;
+
 uniform vec2  u_resolution;
 
 const float screenSize = 1.0;
-const float objectSize = 0.5;
+const float objectSize = 0.3;
 
 
 float dotProduct(vec3 a, vec3 b){
@@ -61,7 +66,6 @@ void main() {
     // sample input with filtering — uv is [0,1] across the image
     vec4 inputColor = texture(u_input, uv);
 
-
     vec4 color_accumulator = vec4(0.0, 0.0, 0.0, 0.0);
 
     //---------------------------------------------------------------------------------------------
@@ -70,15 +74,13 @@ void main() {
 
     vec3 rayDir = vec3(0.0, 0.0, 1.0);
     vec3 rayOrigin = vec3(0.0 + uv.x * screenSize, 0.0 + uv.y * screenSize, 0.0);
-    vec3 lensPosCenter = vec3(screenSize/2.0, screenSize/2.0, u_a);
-    vec3 imagePos = vec3(0.0, 0.0, u_b + u_a);
+    vec3 lensPosCenter = vec3(screenSize/2.0 + u_xLensPos, screenSize/2.0 + u_yLensPos, u_a);
+    vec3 objectPos = vec3(u_xObjPos, u_yObjPos, u_b + u_a);
+
 
     //---------------------------------------------------------------------------------------------
     //ray tracing
     //---------------------------------------------------------------------------------------------
-
-    // najde t prvega zadetka z sfero
-    // P(t) = t * d + o
 
     float t;
     vec3 sphereHit;
@@ -87,7 +89,8 @@ void main() {
     vec4 color;
     int hitCount = 0;
 
-    for(int i = 0; i < 2; i++){  // only 2 refractions needed
+    // P(t) = t * d + o
+    for(int i = 0; i < 2; i++){  //2 reflectiona
         t = intersectSphere(rayOrigin, rayDir, lensPosCenter, u_r);
         if(t <= 0.0) break;
 
@@ -97,24 +100,22 @@ void main() {
         rayOrigin = sphereHit;
     }
 
+    //---------------------------------------------------------------------------------------------
+    //hits image/background
+    //---------------------------------------------------------------------------------------------
+
     // sample screen after exiting the lens
     float t_plate = (u_b - rayOrigin.z) / rayDir.z;
     vec3 screenHit = t_plate * rayDir + rayOrigin;
-    if(screenHit.x >= 0.0 && screenHit.x <= objectSize && screenHit.y >= 0.0 && screenHit.y <= objectSize) //pogoj da trofi dejanso sliko ne pa neskonci plane
-    color = texture(u_input, screenHit.xy/objectSize);
-    else
-    color = vec4(0.0);
 
+    vec3 bottomLeftImageBoundry = vec3(objectPos);
+    vec3 topRightImageBoundry = vec3(objectPos + objectSize);
 
-    //---------------------------------------------------------------------------------------------
-    //refraction
-    //---------------------------------------------------------------------------------------------
-
-    //---------------------------------------------------------------------------------------------
-    //hits image
-    //---------------------------------------------------------------------------------------------
+    //pogoj da trofi dejanso sliko ne pa neskonci plane
+    if(screenHit.x >= bottomLeftImageBoundry.x && screenHit.x <= topRightImageBoundry.x && screenHit.y >= bottomLeftImageBoundry.y && screenHit.y <= topRightImageBoundry.y)
+    color = texture(u_input, (screenHit.xy - objectPos.xy)/objectSize);
+    else color = vec4(screenHit.xyyy); //barva odzadja
 
     //accumulate color
     imageStore(outputImage, coord, color);
-
 }
