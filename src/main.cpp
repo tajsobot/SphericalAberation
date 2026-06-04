@@ -189,7 +189,7 @@ int main() {
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
     savePNG(outputTex, IMAGE_W, IMAGE_H, "../output/frame.png");
 
-    float u_r = 1.0f, u_n = 1.5f, u_a = 5.0f, u_b = 5.0f, u_xLensPos = 0.0f, u_yLensPos = 0.0f, u_xObjPos = 0.0f, u_yObjPos = 0.0f, u_ObjScale = 1.0f;
+    float u_r = 1.0f, u_n = 1.1f, u_a = 5.0f, u_b = 5.0f, u_xLensPos = 0.0f, u_yLensPos = 0.0f, u_xObjPos = 0.0f, u_yObjPos = 0.0f, u_ObjScale = 1.0f;
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();

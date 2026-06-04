@@ -59,13 +59,11 @@ void main() {
 
     ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
     vec2 uv = vec2(coord) / u_resolution;
-    // sample input with filtering — uv is [0,1] across the image
     vec4 inputColor = texture(u_input, uv);
-
     vec4 color_accumulator = vec4(0.0, 0.0, 0.0, 0.0);
 
     //---------------------------------------------------------------------------------------------
-    //cast ray
+    // cast ray
     //---------------------------------------------------------------------------------------------
 
     vec3 rayDir = vec3(0.0, 0.0, 1.0);
@@ -73,9 +71,8 @@ void main() {
     vec3 lensPosCenter = vec3(screenSize/2.0 + u_xLensPos, screenSize/2.0 + u_yLensPos, u_a);
     vec3 objectPos = vec3(u_xObjPos, u_yObjPos, u_b + u_a);
 
-
     //---------------------------------------------------------------------------------------------
-    //ray tracing
+    // ray tracing
     //---------------------------------------------------------------------------------------------
 
     float t;
@@ -86,18 +83,27 @@ void main() {
     int hitCount = 0;
 
     // P(t) = t * d + o
-    for(int i = 0; i < 2; i++){  //2 reflectiona
+    float n1, n2;
+    for(int i = 0; i < 2; i++){
         t = intersectSphere(rayOrigin, rayDir, lensPosCenter, u_r);
         if(t <= 0.0) break;
 
         sphereHit = t * rayDir + rayOrigin;
         surfaceNormal = normalize(sphereHit - lensPosCenter);
-        rayDir = refractRay(rayDir, surfaceNormal, i == 0 ? 1.0 : u_n, i == 0 ? u_n : 1.0);
-        rayOrigin = sphereHit;
+
+        //obrne sormalo navzven na drugi povsini
+        if(i == 1) surfaceNormal = -surfaceNormal;
+
+        n1 = (i == 0) ? 1.0 : u_n;
+        n2 = (i == 0) ? u_n : 1.0;
+
+        rayDir = refractRay(rayDir, surfaceNormal, n1, n2);
+        if(rayDir == vec3(0.0)) break; // popolni odboj
+        rayOrigin = sphereHit + rayDir * 0.001; // ray se acne malo naprej od povrsine
     }
 
     //---------------------------------------------------------------------------------------------
-    //hits image/background
+    // image/background
     //---------------------------------------------------------------------------------------------
 
     // sample screen after exiting the lens
@@ -110,7 +116,7 @@ void main() {
     //pogoj da trofi dejanso sliko ne pa neskonci plane
     if(screenHit.x >= bottomLeftImageBoundry.x && screenHit.x <= topRightImageBoundry.x && screenHit.y >= bottomLeftImageBoundry.y && screenHit.y <= topRightImageBoundry.y)
     color = texture(u_input, (screenHit.xy - objectPos.xy)/u_ObjScale);
-    else color = vec4(screenHit.xyyy); //barva odzadja
+    else color = vec4(0.2*normalize(screenHit.xyy), 1.0); //barva odzadja
 
     //accumulate color
     imageStore(outputImage, coord, color);
