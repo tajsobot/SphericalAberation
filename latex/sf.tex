@@ -53,7 +53,7 @@
     % ─────────────────────────────────────────────────────────────────────────
 
     Sferična aberacija je ena izmed optičnih napak, ki nastane, ko leča ne lomi vseh vpadnih žarkov v isto gorišče.
-    V tej nalogi smo analizirali lom žarkov skozi sferično loečo, kjer je ta pojav bistveno opazljiv.
+    V tej nalogi smo analizirali lom žarkov skozi sferično lečo, kjer je ta pojav bistveno opazljiv.
     Bolj oddaljeni so vpadni žarki od optične osi leče, večji pogrešek imajo.
     Rezultat je popačena slika.
     V inštrumentih kot so kamere in teleskopi, kjer nastopajo sistemi leč pa to prevede v zamegljene in ne ostre slike.
@@ -138,8 +138,7 @@
     V programu žarka ne sledimo naprej.
 
     % ─────────────────────────────────────────────────────────────────────────
-    \section{Geometrija sf
-ere in žarka}
+    \section{Geometrija sfere in žarka}
     % ─────────────────────────────────────────────────────────────────────────
 
     \subsection{Enačba sfere}
@@ -344,15 +343,15 @@ for (int i = 0; i < 2; i++) {
             \hline
             \textbf{Uniform} & \textbf{Pomen} & \textbf{Tippična vrednost} \\
             \hline
-            \texttt{u\_r}        & Polmer sferne leče              & $0.1 \ldots 3.0$ \\
-            \texttt{u\_n}        & Lomni količnik stekla           & $1.5$ \\
+            \texttt{u\_r}        & Polmer sferne leče              & $0.0 \ldots 5.0$ \\
+            \texttt{u\_n}        & Lomni količnik stekla           & $1.2$ \\
             \texttt{u\_a}        & Razdalja predmeta od leče       & $10.0$ (vzporedni žarki $\to \infty$) \\
             \texttt{u\_b}        & Razdalja slike od leče          & nastavljivo \\
             \texttt{u\_xLensPos} & Horizontalni položaj leče       & nastavljivo \\
             \texttt{u\_yLensPos} & Vertikalni položaj leče         & nastavljivo \\
             \texttt{u\_xObjPos}  & Horizontalni položaj objekta    & nastavljivo \\
             \texttt{u\_yObjPos}  & Vertikalni položaj objekta      & nastavljivo \\
-            \texttt{u\_ObjScale} & Velikost objekta na zaslobu     & $0.5 \ldots 2.0$ \\
+            \texttt{u\_ObjScale} & Velikost objekta na zaslonu     & $0.0 \ldots 2.0$ \\
             \hline
         \end{tabular}
         \caption{Uniformni parametri compute shaderja}
@@ -362,7 +361,7 @@ for (int i = 0; i < 2; i++) {
     \section{Rezutati}
     % ─────────────────────────────────────────────────────────────────────────
 
-    \subsection{testne slike}
+    \subsection{Testne slike}
 
     Testna slika, ki je bila uporabljena:
     \begin{figure}[H]
@@ -486,7 +485,7 @@ u_ObjScale= 0.200
     % ─────────────────────────────────────────────────────────────────────────
 
     V tej seminarski nalogi smo spoznali metodo "ray tracing" za simulacijo sferične aberacije skozi
-    sferno lečo.
+    sferično lečo.
 
     Pokazali smo, da lahko Snellov zakon zapišemo v vektorski obliki, ki je neposredno uporabna
     v računalniški grafiki — brez eksplicitnega računanja kotov. Presečišče žarka s sfero smo
@@ -497,25 +496,20 @@ u_ObjScale= 0.200
     kar se kaže kot zamegljena in popačena slika. Pri večjem $r$ se žarki zberejo bliže skupaj
     in slika je ostrejša.
 
-    Čeprav je izrisovan ekran bil velik $1024 * 1024 = 1'048'576$, to pomeni več kot 1 miljon žarkov na sliko je GPU (v našem primeru NVIDIA GeForce RTX 3060 Ti) sliko v povprečju generiral le v 6 milisekundah!
+    Čeprav je izrisovan ekran bil velik $1024 \times 1024 = 1'048'576$, to pomeni več kot 1 miljon žarkov na sliko je GPU (v našem primeru NVIDIA GeForce RTX 3060 Ti) sliko v povprečju generiral le v 6 milisekundah!
     Kar nam pove kako učinkovito je vzporedno procesiranje za takšne naloge.
 
 
     \pagebreak
     \section{Viri}
 
-    \begin{thebibliography}{9}
-        \bibitem{shirley}
-        P. Shirley, \textit{Ray Tracing in One Weekend}, 2020. \\
-        Dostopno na: \url{https://raytracing.github.io/}
-
-        \bibitem{glsl}
-        Khronos Group, \textit{GLSL Specification 4.60}. \\
-        Dostopno na: \url{https://registry.khronos.org/OpenGL/specs/gl/GLSLangSpec.4.60.pdf}
-
-        \bibitem{opengl}
-        Khronos Group, \textit{OpenGL 4.3 Core Profile Specification}, 2012. \\
-        Dostopno na: \url{https://registry.khronos.org/OpenGL/specs/gl/glspec43.core.pdf}
-    \end{thebibliography}
+    P. Shirley, \textit{Ray Tracing in One Weekend}, 2020. \\
+    Dostopno na: \url{https://raytracing.github.io/} \\
+    \vspace{0.5cm}
+    Khronos Group, \textit{GLSL Specification 4.60}. \\
+    Dostopno na: \url{https://registry.khronos.org/OpenGL/specs/gl/GLSLangSpec.4.60.pdf}\\
+    \vspace{0.5cm}
+    Khronos Group, \textit{OpenGL 4.3 Core Profile Specification}, 2012. \\
+    Dostopno na: \url{https://registry.khronos.org/OpenGL/specs/gl/glspec43.core.pdf}\\
 
 \end{document}

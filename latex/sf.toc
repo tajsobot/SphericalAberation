@@ -4,7 +4,7 @@
 \contentsline {subsection}{\numberline {2.2}Vektorska oblika Snellovega zakona}{2}{subsection.2.2}%
 \contentsline {subsubsection}{\numberline {2.2.1}Izpeljava}{2}{subsubsection.2.2.1}%
 \contentsline {subsubsection}{\numberline {2.2.2}Popolni odboj}{3}{subsubsection.2.2.2}%
-\contentsline {section}{\numberline {3}Geometrija sf ere in žarka}{3}{section.3}%
+\contentsline {section}{\numberline {3}Geometrija sfere in žarka}{3}{section.3}%
 \contentsline {subsection}{\numberline {3.1}Enačba sfere}{3}{subsection.3.1}%
 \contentsline {subsection}{\numberline {3.2}Presečišče žarka s sfero}{3}{subsection.3.2}%
 \contentsline {subsection}{\numberline {3.3}Normala v točki presečišča}{4}{subsection.3.3}%
@@ -20,7 +20,7 @@
 \contentsline {subsection}{\numberline {5.4}Vzorčenje slike na zaslonu}{6}{subsection.5.4}%
 \contentsline {section}{\numberline {6}Parametri programa}{6}{section.6}%
 \contentsline {section}{\numberline {7}Rezutati}{7}{section.7}%
-\contentsline {subsection}{\numberline {7.1}testne slike}{7}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.1}Testne slike}{7}{subsection.7.1}%
 \contentsline {subsection}{\numberline {7.2}Prvi render}{8}{subsection.7.2}%
 \contentsline {subsection}{\numberline {7.3}Drugi render}{9}{subsection.7.3}%
 \contentsline {subsection}{\numberline {7.4}Tretji render}{10}{subsection.7.4}%
