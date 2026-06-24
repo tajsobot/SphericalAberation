@@ -42,6 +42,12 @@
 
     \flushleft
 
+    \pagebreak
+    \renewcommand{\contentsname}{Kazalo}
+    \tableofcontents{}
+    \pagebreak
+
+
     % ─────────────────────────────────────────────────────────────────────────
     \section{Uvod}
     % ─────────────────────────────────────────────────────────────────────────
@@ -53,7 +59,8 @@
     V inštrumentih kot so kamere in teleskopi, kjer nastopajo sistemi leč pa to prevede v zamegljene in ne ostre slike.
 
     Lečo bomo modelirali kot krogelno ploskev z določenim lomnim količnikom $n$ in polmerom $r$.
-    Uporabljali bomo program napisan v C++ programskem jeziku, ki bo z uporabo metode "ray tracing", simuliral prehod svetlobnih žarkov skozi tako lečo.
+    Z uporabo metode "ray tracing", bomo simuliral prehod svetlobnih žarkov skozi tako lečo.
+    Uporabljali bomo program napisan v C++ ter knjižnice za izrisovanje imenovano OpenGL.
 
 
     % ─────────────────────────────────────────────────────────────────────────
@@ -68,45 +75,44 @@
         n_1 \sin\theta_1 = n_2 \sin\theta_2,
         \label{eq:snell}
     \end{equation}
-    kjer je $\theta_1$ vpadni kot in $\theta_2$ lomni kot, oba merjena glede na normalo ploskve
-    v točki vpada.
+    kjer je $\theta_1$ vpadni kot in $\theta_2$ lomni kot na normalo ploskve.
 
     \subsection{Vektorska oblika Snellovega zakona}
 
-    V ray tracingu je priročno Snellov zakon izraziti vektorsko, saj poznamo smer vpadnega žarka
-    $\hat{d}$ in normalo ploskve $\hat{n}$, ne pa kotov direktno.
+    Da lahko žarkom sledimo potrebujemo Snellov zakon v vektorski obliki.
+    Poznamo smer vpadnega žarka $\hat{d}$ in normalo ploskve $\hat{n}$, ne pa kotov direktno.
 
     \subsubsection{Izpeljava}
 
     Označimo:
     \begin{itemize}
-        \item $\hat{d}$ — enotski vektor vpadnega žarka (kaže \emph{v} ploskev),
-        \item $\hat{n}$ — enotski normala ploskve (kaže \emph{stran} od ploskve, proti vpadnemu žarku),
-        \item $\hat{t}$ — enotski vektor lomljene smeri.
+        \item $\hat{d}$ - enotski vektor za smer vpadnega žarka,
+        \item $\hat{n}$ - enotski normala ploskve,
+        \item $\hat{t}$ - enotski vektor za smer lomljenega žarka.
     \end{itemize}
 
-    Kosinuse kotov dobimo iz skalarnih produktov:
+    Kosinuse kotov glede na normalo dobimo iz skalarnih produktov:
     \begin{equation}
         \cos\theta_1 = -\hat{d} \cdot \hat{n}, \qquad \cos\theta_2 = \sqrt{1 - \sin^2\theta_2}.
     \end{equation}
 
-    Iz Snellovega zakona \eqref{eq:snell} sledi:
+    Iz kvadrata Snellovega zakona \eqref{eq:snell} sledi:
     \begin{equation}
         \sin^2\theta_2 = \left(\frac{n_1}{n_2}\right)^2 \sin^2\theta_1
         = \left(\frac{n_1}{n_2}\right)^2 (1 - \cos^2\theta_1).
     \end{equation}
 
-    Lom\-ljeni žarek $\hat{t}$ razstavimo na tangencialno in normalno komponento glede na ploskev:
+    Žarek $\hat{t}$ razstavimo po komponentah glede na ploskev:
     \begin{align}
         \hat{t} &= \hat{t}_\parallel + \hat{t}_\perp.
     \end{align}
 
-    Tangencialna komponenta je vzporedna z vpadnim žarkom (brez normalne sestavine):
+    Vzporedna komponenta:
     \begin{equation}
         \hat{t}_\parallel = \frac{n_1}{n_2}\left(\hat{d} + \cos\theta_1\,\hat{n}\right).
     \end{equation}
 
-    Normalna komponenta je vzdolž normale:
+    Pravokotna komponenta je vzdolž normale:
     \begin{equation}
         \hat{t}_\perp = -\cos\theta_2\,\hat{n}.
     \end{equation}
@@ -123,31 +129,35 @@
 
     \subsubsection{Popolni odboj}
 
-    Kadar je $\sin^2\theta_2 > 1$, lomljenega žarka ni — nastopi popolni notranji odboj (ang.
-    \emph{total internal reflection}, TIR). Pogoj:
+    Kadar je $\sin^2\theta_2 > 1$, lomljenega žarka ni.
+    Nastopi popolni notranji odboj (ang.
+    \emph{total internal reflection}, TIR). Torej ta člen:
     \begin{equation}
         \left(\frac{n_1}{n_2}\right)^2(1 - \cos^2\theta_1) > 1.
     \end{equation}
-    V tem primeru žarka ne propagiramo naprej.
+    V programu žarka ne sledimo naprej.
 
     % ─────────────────────────────────────────────────────────────────────────
-    \section{Geometrija sfere}
+    \section{Geometrija sf
+ere in žarka}
     % ─────────────────────────────────────────────────────────────────────────
 
     \subsection{Enačba sfere}
 
-    Sfera s središčem $\vec{c}$ in polmerom $R$ je množica vseh točk $\vec{P}$, ki zadostijo:
+    Sfera s središčem $\vec{c}$ in polmerom $R$ je množica vseh točk $\vec{P}$:
     \begin{equation}
         |\vec{P} - \vec{c}|^2 = R^2.
     \end{equation}
 
     \subsection{Presečišče žarka s sfero}
 
-    Žarek opišemo parametrično:
+    Žarek opišemo z enačbo premice:
     \begin{equation}
         \vec{P}(t) = \vec{o} + t\,\hat{d},
     \end{equation}
-    kjer je $\vec{o}$ izhodišče žarka in $\hat{d}$ enotska smer. Vstavimo v enačbo sfere:
+    kjer je $\vec{o}$ izhodišče žarka in $\hat{d}$ enotska smer.
+    Točko $P(t)$ si lahko predstavljamo kot žarek, ki napreduje skozi prostor ko povečujemo t.
+    Vstavimo v enačbo sfere:
     \begin{equation}
         |\vec{o} + t\,\hat{d} - \vec{c}|^2 = R^2.
     \end{equation}
@@ -177,7 +187,7 @@
     \begin{equation}
         t = \min\{t_1, t_2 \mid t > \varepsilon\},
     \end{equation}
-    kjer je $\varepsilon > 0$ majhna vrednost, ki prepreči samopresečišče (ang. \emph{self-intersection}).
+    kjer je $\varepsilon > 0$ majhna vrednost, ki prepreči .
 
     \subsection{Normala v točki presečišča}
 
@@ -189,34 +199,52 @@
     Pri izstopu iz sfere (druga površina) moramo normalo obrniti: $\hat{n} \to -\hat{n}$, da pravilno
     označimo prehod iz gostejšega v redkejši medij.
 
-    % ─────────────────────────────────────────────────────────────────────────
-    \section{Sferična aberacija}
-    % ─────────────────────────────────────────────────────────────────────────
+% ─────────────────────────────────────────────────────────────────────────
+    \section{Opis programa}
+% ─────────────────────────────────────────────────────────────────────────
 
-    \subsection{Paraksijska aproksimacija}
+    \subsection{OpenGL in shaderji}
 
-    Za žarke blizu optične osi (majhen $\theta_1$) velja $\sin\theta \approx \theta$, kar dá
-    enostavno lensmaker's enačbo:
-    \begin{equation}
-        \frac{1}{a} + \frac{1}{b} = \frac{1}{f},
-    \end{equation}
-    kjer je $a$ razdalja predmeta, $b$ razdalja slike in $f$ goriščna razdalja leče.
+    OpenGL je knjižnica narejena v C, ki nam dovoli enostavnejšo sporazumevanje z grafično procesno enoto
+    (ang.\ \emph{Graphics Processing Unit}, GPU).
+    Koda za inicializacijo oken, bufferjev, resolucije, IO itd.\ je pretežna, zato ne bo opisana v tej seminarski nalogi.
+    Glavni del pri programiranju grafike je koncept \emph{shaderjev}.
+    To so pod-programi napisani v jeziku GLSL (zelo podoben C), ki se zaženejo za vsak piksel na ekranu vzporedno (so neodvisni en od drugega).
+    To si lahko predstavljamo, kot da ima vsak piksel svoj programček.
+    Vsak ta programček dobi spremenljivko $UV$ — 2D koordinata piksla z vrednostjo med 0 in 1, ki nam pove kje se naš piksel nahaja.
+    GLSL program lahko sprejema tudi druge spremenljivke iz starševskega (main) programa.
+    Takšno spremenljivko imenujemo "uniform".
 
-    \subsection{Izvor aberacije}
+    \subsection{Compute shader}
 
-    Za žarke daleč od osi paraksijska aproksimacija ne velja več. Dejansko gorišče žarka, ki
-    vpade na rob sferne leče z polmerom $R$ in lomnim količnikom $n$, je bliže leči kot paraksijsko
-    gorišče. Razlika med paraksijskim in dejanskim gorilnim mestom tvori \emph{sferno aberacijo}.
+    V našem primeru uporabljamo poseben tip shaderja imenovan \emph{compute shader}, ki ne riše direktno na zaslon,
+    ampak piše rezultat v buffer (sliko v pomnilniku GPU).
+    Na koncu jo lahko shrani v datoteko ali pa jo izriše na zaslon.
 
-    Za sferično lečo (obe površini sta krogelni s polmerom $R$) je goriščna razdalja v paraksijski
-    aproksimaciji:
-    \begin{equation}
-        \frac{1}{f} = (n - 1)\left(\frac{1}{R_1} - \frac{1}{R_2}\right),
-    \end{equation}
-    kar je \emph{lensmaker's enačba} za tanko lečo. Za sferno kroglo z $R_1 = R$ in $R_2 = -R$:
-    \begin{equation}
-        \frac{1}{f} = \frac{2(n-1)}{R}.
-    \end{equation}
+    \subsection{Metanje žarkov}
+
+    Iz vsakega piksla ``mečemo'' svetlobni žarek, ki mu sledimo do ravnine slike, kjer dobi svojo barvo.
+    Izhodišče žarka izračunamo iz UV koordinat:
+    \[
+        \vec{o} = \bigl(UV_x \cdot w,\; UV_y \cdot h,\; 0\bigr),
+    \]
+    kjer sta $w$ in $h$ dimenziji zaslona v naši sceni.
+    Smer žarka je za vse piksle enaka (vzporedni žarki):
+    \[
+        \hat{d} = (0,\; 0,\; 1).
+    \]
+
+    \subsection{Zgradba scene}
+
+    V naši sceni imamo tri elemente: sliko, lečo in zaslon.
+    Vzporedni žarki simulirajo neskončno oddaljen zaslon.
+
+    Pot žarka v realnosti gre od vira svetlobe, zadane sliko, se lomi skozi lečo ter pristane na zaslonu.
+    Pri \emph{ray tracingu} pa to delamo v obratni smeri:
+    žarek svojo pot začne pri zaslonu, gre skozi lečo do slike, in šele tam dobi svojo barvo.
+    S tem smo računalniku prihranili računanje vseh žarkov, ki sploh ne bi zadeli zaslona.
+
+    Opazimo tudi, da za našo demonstracijo ne potrebujemo vira svetlobe kot je luč, žarek preprosto prevzame barvo slike, kjer jo zadane.
 
     % ─────────────────────────────────────────────────────────────────────────
     \section{Implementacija v GLSL}
@@ -224,15 +252,13 @@
 
     \subsection{Compute shader — presečišče s sfero}
 
-    Vsak invokacijski thread obdeluje en piksel izhodne slike. Žarek je metamo vzporedno z
-    optično osjo ($z$-smeri), izhodišče žarka pa ustreza položaju piksla v ravnini senzorja.
 
     \begin{lstlisting}[language=C, caption={Presečišče žarka s sfero v GLSL}]
 float intersectSphere(vec3 origin, vec3 dir, vec3 center, float r) {
     vec3 oc = origin - center;
     float b = 2.0 * dot(dir, oc);
     float c = dot(oc, oc) - r * r;
-    float D = b * b - 4.0 * c;        // a = 1 ker je |dir| = 1
+    float D = b * b - 4.0 * c;
     if (D < 0.0) return -1.0;
     float t1 = (-b - sqrt(D)) / 2.0;
     float t2 = (-b + sqrt(D)) / 2.0;
@@ -250,7 +276,7 @@ float intersectSphere(vec3 origin, vec3 dir, vec3 center, float r) {
 vec3 refractRay(vec3 d, vec3 normal, float n1, float n2) {
     float cosI  = -dot(normal, d);
     float sinT2 = (n1/n2)*(n1/n2) * (1.0 - cosI*cosI);
-    if (sinT2 > 1.0) return vec3(0.0);   // TIR
+    if (sinT2 > 1.0) return vec3(0.0);   // popolni odboj
     float cosT = sqrt(1.0 - sinT2);
     return (n1/n2)*d + (n1/n2*cosI - cosT)*normal;
 }
@@ -258,8 +284,8 @@ vec3 refractRay(vec3 d, vec3 normal, float n1, float n2) {
 
     \subsection{Potek žarka skozi lečo}
 
-    Vsak žarek preide skozi dve površini sfere — vstopno in izstopno. Na vsaki površini
-    apliciramo lom:
+    Vsak žarek preide skozi dve površini sfere — vstopno in izstopno.
+    Na vsaki površini lom (ponovimo 2x):
 
     \begin{lstlisting}[language=C, caption={Zanka dveh prehodov skozi sfero}]
 for (int i = 0; i < 2; i++) {
@@ -268,7 +294,7 @@ for (int i = 0; i < 2; i++) {
 
     vec3 hit    = rayOrigin + t * rayDir;
     vec3 normal = normalize(hit - lensCenter);
-    if (i == 1) normal = -normal;  // izstop: normala obrnjena navznoter
+    if (i == 1) normal = -normal;  // normala obrnjena za lom steklo -> zrak
 
     float n1 = (i == 0) ? 1.0 : u_n;
     float n2 = (i == 0) ? u_n : 1.0;
@@ -288,16 +314,22 @@ for (int i = 0; i < 2; i++) {
     Po izstopu iz leče žarek propagiramo do ravnine slike na razdalji $u\_b + u\_a$:
 
     \begin{lstlisting}[language=C, caption={Vzorčenje objektne ravnine}]
-float t_plate  = (objectPos.z - rayOrigin.z) / rayDir.z;
-vec3  hit      = rayOrigin + t_plate * rayDir;
+    //slika na razdalji u_b + u_a
+    float t_plate = (objectPos.z - rayOrigin.z) / rayDir.z;
+    vec3 screenHit = t_plate * rayDir + rayOrigin;
 
-// UV koordinate za vzorcenje vhodne teksture
-vec2 uv = (hit.xy - objectPos.xy) / u_ObjScale;
-if (all(greaterThanEqual(uv, vec2(0.0))) &&
-    all(lessThanEqual(uv, vec2(1.0))))
-    color = texture(u_input, uv);
-else
-    color = vec4(0.2 * normalize(hit.xyy), 1.0);
+    vec3 bottomLeftImageBoundry = vec3(objectPos);
+    vec3 topRightImageBoundry = vec3(objectPos + u_ObjScale);
+
+    if(...screen hit...)
+    color = texture(u_input, (screenHit.xy - objectPos.xy)/u_ObjScale);
+    //za zadje
+    else color = vec4(0.2*normalize(screenHit.xyy), 1.0);
+    //za popolni odboj
+    if(rayDir == vec3(0.0)) {
+        color = vec4(0.0,0.0,0.0,1.0);
+    }
+    imageStore(outputImage, coord, color);
     \end{lstlisting}
 
     % ─────────────────────────────────────────────────────────────────────────
@@ -312,39 +344,167 @@ else
             \hline
             \textbf{Uniform} & \textbf{Pomen} & \textbf{Tippična vrednost} \\
             \hline
-            \texttt{u\_r}        & Polmer sferne leče              & $0.5 \ldots 2.0$ \\
-            \texttt{u\_n}        & Lomni količnik stekla           & $1.5$ (crown glass) \\
+            \texttt{u\_r}        & Polmer sferne leče              & $0.1 \ldots 3.0$ \\
+            \texttt{u\_n}        & Lomni količnik stekla           & $1.5$ \\
             \texttt{u\_a}        & Razdalja predmeta od leče       & $10.0$ (vzporedni žarki $\to \infty$) \\
             \texttt{u\_b}        & Razdalja slike od leče          & nastavljivo \\
-            \texttt{u\_xLensPos} & Horizontalni položaj leče       & $0.0$ \\
-            \texttt{u\_yLensPos} & Vertikalni položaj leče         & $0.0$ \\
-            \texttt{u\_xObjPos}  & Horizontalni položaj objekta    & $0.0$ \\
-            \texttt{u\_yObjPos}  & Vertikalni položaj objekta      & $0.0$ \\
-            \texttt{u\_ObjScale} & Velikost objekta na zaslobu     & $1.0$ \\
+            \texttt{u\_xLensPos} & Horizontalni položaj leče       & nastavljivo \\
+            \texttt{u\_yLensPos} & Vertikalni položaj leče         & nastavljivo \\
+            \texttt{u\_xObjPos}  & Horizontalni položaj objekta    & nastavljivo \\
+            \texttt{u\_yObjPos}  & Vertikalni položaj objekta      & nastavljivo \\
+            \texttt{u\_ObjScale} & Velikost objekta na zaslobu     & $0.5 \ldots 2.0$ \\
             \hline
         \end{tabular}
         \caption{Uniformni parametri compute shaderja}
     \end{table}
 
     % ─────────────────────────────────────────────────────────────────────────
+    \section{Rezutati}
+    % ─────────────────────────────────────────────────────────────────────────
+
+    \subsection{testne slike}
+
+    Testna slika, ki je bila uporabljena:
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{img/pi}
+        \caption{Testna slika}
+        \label{fig:testna slika}
+    \end{figure}
+
+    Ozadje, ki je bilo uporabljeno:
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{img/ozadje}
+        \caption{Ozadje}
+        \label{fig:ozadje}
+    \end{figure}
+
+    \subsection{Prvi render}
+
+    Zrcaljenje in pomanjšanje slike.
+    \begin{lstlisting}[language=C, caption={Parametri}]
+u_r       = 0.500
+u_n       = 1.200
+u_a       = 10.000
+u_b       = 2.820
+u_xLensPos= 0.000
+u_yLensPos= 0.000
+u_xObjPos = 0.000
+u_yObjPos = 0.000
+u_ObjScale= 1.000
+    \end{lstlisting}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{img/render1}
+        \caption{Render 1}
+        \label{fig:render1}
+    \end{figure}
+
+    \subsection{Drugi render}
+    Premaknjena slika.
+    \begin{lstlisting}[language=C, caption={Parametri}]
+u_r       = 0.330
+u_n       = 1.200
+u_a       = 10.000
+u_b       = 2.220
+u_xLensPos= 0.000
+u_yLensPos= 0.000
+u_xObjPos = 0.030
+u_yObjPos = 0.340
+u_ObjScale= 0.620
+    \end{lstlisting}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{img/render2}
+        \caption{Render 2}
+        \label{fig:render2}
+    \end{figure}
+
+    \subsection{Tretji render}
+    Manjša leča, bolj popačena slika.
+    \begin{lstlisting}[language=C, caption={Parametri}]
+u_r       = 0.550
+u_n       = 1.200
+u_a       = 10.000
+u_b       = 2.750
+u_xLensPos= 0.000
+u_yLensPos= 0.000
+u_xObjPos = 0.000
+u_yObjPos = 0.000
+u_ObjScale= 1.000
+    \end{lstlisting}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{img/render3}
+        \caption{Render 3}
+        \label{fig:render3}
+    \end{figure}
+
+    \subsection{Četrti render}
+    Večja leča, manj popačena slika.
+    \begin{lstlisting}[language=C, caption={Parametri}]
+u_r       = 1.290
+u_n       = 1.200
+u_a       = 10.000
+u_b       = 7.650
+u_xLensPos= 0.000
+u_yLensPos= 0.000
+u_xObjPos = 0.000
+u_yObjPos = 0.000
+u_ObjScale= 1.000
+    \end{lstlisting}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{img/render4}
+        \caption{Render 4}
+        \label{fig:render4}
+    \end{figure}
+
+    \subsection{Peti render}
+    Leča ne pokriva slike.
+    \begin{lstlisting}[language=C, caption={Parametri}]
+u_r       = 0.180
+u_n       = 1.200
+u_a       = 10.000
+u_b       = 1.120
+u_xLensPos= 0.190
+u_yLensPos= -0.150
+u_xObjPos = 0.280
+u_yObjPos = 0.500
+u_ObjScale= 0.200
+    \end{lstlisting}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{img/render5}
+        \caption{Render 5}
+        \label{fig:render5}
+    \end{figure}
+
+    % ─────────────────────────────────────────────────────────────────────────
     \section{Zaključek}
     % ─────────────────────────────────────────────────────────────────────────
 
-    Implementirali smo ray tracer za simulacijo sferične aberacije, ki deluje v realnem času
-    na GPU. Vsak piksel izhodne slike ustreza enemu svetlobnemu žarku, ki ga propagiramo
-    skozi sferno lečo z dvema lomoma (vstop in izstop), pri čemer na vsaki površini apliciramo
-    vektorsko obliko Snellovega zakona. Sferična aberacija se jasno pokaže kot razmazanost
-    slike, ki se povečuje z večjim polmerom žarka in večjim lomnim količnikom. Interaktivna
-    nastavitev parametrov omogoča intuitivno razumevanje, kako posamezni parametri vplivajo
-    na kakovost slike.
+    V tej seminarski nalogi smo spoznali metodo "ray tracing" za simulacijo sferične aberacije skozi
+    sferno lečo.
+
+    Pokazali smo, da lahko Snellov zakon zapišemo v vektorski obliki, ki je neposredno uporabna
+    v računalniški grafiki — brez eksplicitnega računanja kotov. Presečišče žarka s sfero smo
+    izpeljali kot kvadratno enačbo, katere rešitvi določata vstopno in izstopno točko na leči.
+
+    Iz rezultatov je razvidno, da manjši polmer leče $r$ povzroči večjo sferično aberacijo —
+    žarki, ki potujejo skozi rob leče, se lomijo bistveno bolj kot paraksialni žarki blizu osi,
+    kar se kaže kot zamegljena in popačena slika. Pri večjem $r$ se žarki zberejo bliže skupaj
+    in slika je ostrejša.
+
+    Čeprav je izrisovan ekran bil velik $1024 * 1024 = 1'048'576$, to pomeni več kot 1 miljon žarkov na sliko je GPU (v našem primeru NVIDIA GeForce RTX 3060 Ti) sliko v povprečju generiral le v 6 milisekundah!
+    Kar nam pove kako učinkovito je vzporedno procesiranje za takšne naloge.
+
 
     \pagebreak
     \section{Viri}
 
     \begin{thebibliography}{9}
-        \bibitem{hecht}
-        E. Hecht, \textit{Optics}, 5th ed., Pearson, 2017.
-
         \bibitem{shirley}
         P. Shirley, \textit{Ray Tracing in One Weekend}, 2020. \\
         Dostopno na: \url{https://raytracing.github.io/}

@@ -24,7 +24,6 @@ float dotProduct(vec3 a, vec3 b){
     return 1.0 * (a.x * b.x + a.y * b.y + a.z * b.z);
 }
 
-//todo izpelji
 vec3 refractRay(vec3 d, vec3 normal, float n1, float n2) {
     float cosI  = -dot(normal, d);               // cos(θ1)
     float sinT2 = (n1/n2)*(n1/n2) * (1.0 - cosI*cosI); // snellov zakon

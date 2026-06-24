@@ -162,7 +162,7 @@ int main() {
     GLuint outputTex   = createOutputTexture(IMAGE_W, IMAGE_H);
     GLuint computeProg = compileComputeShader("../shaders/raytrace.comp");
     GLuint quadProg    = compileRasterShader(QUAD_VERT, QUAD_FRAG);
-    GLuint inputTex    = loadInputTexture("../input/arrow.jpg");
+    GLuint inputTex    = loadInputTexture("../input/pi.png");
 
     // dummy VAO — required by core profile even if we don't use vertex buffers
     GLuint vao;
@@ -187,10 +187,10 @@ int main() {
     glUniform2f(glGetUniformLocation(computeProg, "u_resolution"), IMAGE_W, IMAGE_H);
     glDispatchCompute(IMAGE_W / LOCAL_SIZE, IMAGE_H / LOCAL_SIZE, 1);
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
-    savePNG(outputTex, IMAGE_W, IMAGE_H, "../output/frame.png");
+    savePNG(outputTex, IMAGE_W, IMAGE_H, "../output/firstFrame.png");
 
     //                            u_a je v neskoncnosti zaradi paralelnih zarkov!!!
-    float u_r = 1.0f, u_n = 1.1f, u_a = 10.0f, u_b = 5.0f, u_xLensPos = 0.0f, u_yLensPos = 0.0f, u_xObjPos = 0.0f, u_yObjPos = 0.0f, u_ObjScale = 1.0f;
+    float u_r = 1.0f, u_n = 1.2f, u_a = 10.0f, u_b = 5.0f, u_xLensPos = 0.0f, u_yLensPos = 0.0f, u_xObjPos = 0.0f, u_yObjPos = 0.0f, u_ObjScale = 1.0f;
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -215,18 +215,25 @@ int main() {
         if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {u_n -= 0.001f; std::cout << "n:" << u_n << std::endl;}
 
         if (glfwGetKey(window, GLFW_KEY_C)     == GLFW_PRESS) {
-            std::printf(
-            "r: %d \n"
-                  "u_n = %d \n"
-                  "u_b = %d \n"
-                  "u_xLensPos = %f \n"
-                  "u_yLensPos = %f \n"
-                  "u_ObjScale = %f \n"
-                  "u_xObjPos = %f \n"
-                  "u_yObjPos = %f \n");
             savePNG(outputTex, IMAGE_W, IMAGE_H, "../output/activeFrame.png"); //todo izpisi vse parametre za sliko
+            std::printf(
+                "=== saved frame ===\n"
+                "u_r       = %.3f\n"
+                "u_n       = %.3f\n"
+                "u_a       = %.3f\n"
+                "u_b       = %.3f\n"
+                "u_xLensPos= %.3f\n"
+                "u_yLensPos= %.3f\n"
+                "u_xObjPos = %.3f\n"
+                "u_yObjPos = %.3f\n"
+                "u_ObjScale= %.3f\n"
+                "===================\n",
+                u_r, u_n, u_a, u_b,
+                u_xLensPos, u_yLensPos,
+                u_xObjPos, u_yObjPos,
+                u_ObjScale
+            );
         }
-
 
         // ── FIX 1: set compute uniforms while computeProg is active ──
         // glUniform* writes into whichever program is currently bound.
