@@ -189,16 +189,16 @@ int main() {
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
     savePNG(outputTex, IMAGE_W, IMAGE_H, "../output/frame.png");
 
-    float u_r = 1.0f, u_n = 1.1f, u_a = 5.0f, u_b = 5.0f, u_xLensPos = 0.0f, u_yLensPos = 0.0f, u_xObjPos = 0.0f, u_yObjPos = 0.0f, u_ObjScale = 1.0f;
+    //                            u_a je v neskoncnosti zaradi paralelnih zarkov!!!
+    float u_r = 1.0f, u_n = 1.1f, u_a = 100.0f, u_b = 5.0f, u_xLensPos = 0.0f, u_yLensPos = 0.0f, u_xObjPos = 0.0f, u_yObjPos = 0.0f, u_ObjScale = 1.0f;
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
-
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
 
-        if (glfwGetKey(window, GLFW_KEY_UP)    == GLFW_PRESS) {u_a += 0.01f; std::cout << "a:" << u_a << std::endl;}
-        if (glfwGetKey(window, GLFW_KEY_DOWN)  == GLFW_PRESS) {u_a -= 0.01f; std::cout << "a:" << u_a << std::endl;}
+        if (glfwGetKey(window, GLFW_KEY_UP)    == GLFW_PRESS) {u_b += 0.01f; std::cout << "b:" << u_b << std::endl;}
+        if (glfwGetKey(window, GLFW_KEY_DOWN)  == GLFW_PRESS) {u_b -= 0.01f; std::cout << "b:" << u_b << std::endl;}
         if (glfwGetKey(window, GLFW_KEY_LEFT)  == GLFW_PRESS) {u_r -= 0.01f; std::cout << "r:" << u_r << std::endl;}
         if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {u_r += 0.01f; std::cout << "r:" << u_r << std::endl;}
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {u_xLensPos += 0.01f; std::cout << "x_lens:" << u_xLensPos << std::endl;}
@@ -211,6 +211,8 @@ int main() {
         if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {u_yObjPos -= 0.01f; std::cout << "y_obj:" << u_yObjPos << std::endl;}
         if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {u_ObjScale += 0.01f; std::cout << "objScale:" << u_ObjScale << std::endl;}
         if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {u_ObjScale -= 0.01f; std::cout << "objScale:" << u_ObjScale << std::endl;}
+        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {u_n += 0.001f; std::cout << "n:" << u_n << std::endl;}
+        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {u_n -= 0.001f; std::cout << "n:" << u_n << std::endl;}
 
         if (glfwGetKey(window, GLFW_KEY_C)     == GLFW_PRESS)
             savePNG(outputTex, IMAGE_W, IMAGE_H, "../output/activeFrame.png"); //todo izpisi vse parametre za sliko

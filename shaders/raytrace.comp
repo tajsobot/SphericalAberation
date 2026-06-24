@@ -26,11 +26,11 @@ float dotProduct(vec3 a, vec3 b){
 
 //todo izpelji
 vec3 refractRay(vec3 d, vec3 normal, float n1, float n2) {
-    float cosI  = -dot(normal, d);               // cos(θ1) — how aligned ray is with normal
-    float sinT2 = (n1/n2)*(n1/n2) * (1.0 - cosI*cosI); // sin²(θ2) via Snell's law
-    if (sinT2 > 1.0) return vec3(0.0);           // total internal reflection — no refracted ray
+    float cosI  = -dot(normal, d);               // cos(θ1)
+    float sinT2 = (n1/n2)*(n1/n2) * (1.0 - cosI*cosI); // snellov zakon
+    if (sinT2 > 1.0) return vec3(0.0);           // popolni odboj
     float cosT = sqrt(1.0 - sinT2);              // cos(θ2)
-    return (n1/n2)*d + (n1/n2*cosI - cosT)*normal; //tangential part + normal part
+    return (n1/n2)*d + (n1/n2*cosI - cosT)*normal; //tangenta + pravokotna na povrsino
 }
 
 float intersectSphere(vec3 origin, vec3 dir, vec3 center, float r) {
@@ -78,7 +78,6 @@ void main() {
     float t;
     vec3 sphereHit;
     vec3 surfaceNormal;
-    vec3 rayDirNew;
     vec4 color;
     int hitCount = 0;
 
@@ -97,8 +96,11 @@ void main() {
         n1 = (i == 0) ? 1.0 : u_n;
         n2 = (i == 0) ? u_n : 1.0;
 
-        rayDir = refractRay(rayDir, surfaceNormal, n1, n2);
-        if(rayDir == vec3(0.0)) break; // popolni odboj
+        rayDir = refractRay(rayDir, surfaceNormal, n1, n2);    vec3 ;
+
+        if(rayDir == vec3(0.0)) {
+            break; // popolni odboj
+        }
         rayOrigin = sphereHit + rayDir * 0.001; // ray se acne malo naprej od povrsine
     }
 
@@ -107,7 +109,7 @@ void main() {
     //---------------------------------------------------------------------------------------------
 
     // sample screen after exiting the lens
-    float t_plate = (u_b - rayOrigin.z) / rayDir.z;
+    float t_plate = (objectPos.z - rayOrigin.z) / rayDir.z; //plate je na razdalji (u_b + u_a)
     vec3 screenHit = t_plate * rayDir + rayOrigin;
 
     vec3 bottomLeftImageBoundry = vec3(objectPos);
@@ -117,7 +119,9 @@ void main() {
     if(screenHit.x >= bottomLeftImageBoundry.x && screenHit.x <= topRightImageBoundry.x && screenHit.y >= bottomLeftImageBoundry.y && screenHit.y <= topRightImageBoundry.y)
     color = texture(u_input, (screenHit.xy - objectPos.xy)/u_ObjScale);
     else color = vec4(0.2*normalize(screenHit.xyy), 1.0); //barva odzadja
+    if(rayDir == vec3(0.0)) {
+        color = vec4(0.0,0.0,0.0,1.0); // popolni odboj - brez barve
+    }
 
-    //accumulate color
     imageStore(outputImage, coord, color);
 }
