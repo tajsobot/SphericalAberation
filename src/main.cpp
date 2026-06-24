@@ -190,7 +190,7 @@ int main() {
     savePNG(outputTex, IMAGE_W, IMAGE_H, "../output/frame.png");
 
     //                            u_a je v neskoncnosti zaradi paralelnih zarkov!!!
-    float u_r = 1.0f, u_n = 1.1f, u_a = 100.0f, u_b = 5.0f, u_xLensPos = 0.0f, u_yLensPos = 0.0f, u_xObjPos = 0.0f, u_yObjPos = 0.0f, u_ObjScale = 1.0f;
+    float u_r = 1.0f, u_n = 1.1f, u_a = 10.0f, u_b = 5.0f, u_xLensPos = 0.0f, u_yLensPos = 0.0f, u_xObjPos = 0.0f, u_yObjPos = 0.0f, u_ObjScale = 1.0f;
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -214,8 +214,19 @@ int main() {
         if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {u_n += 0.001f; std::cout << "n:" << u_n << std::endl;}
         if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {u_n -= 0.001f; std::cout << "n:" << u_n << std::endl;}
 
-        if (glfwGetKey(window, GLFW_KEY_C)     == GLFW_PRESS)
+        if (glfwGetKey(window, GLFW_KEY_C)     == GLFW_PRESS) {
+            std::printf(
+            "r: %d \n"
+                  "u_n = %d \n"
+                  "u_b = %d \n"
+                  "u_xLensPos = %f \n"
+                  "u_yLensPos = %f \n"
+                  "u_ObjScale = %f \n"
+                  "u_xObjPos = %f \n"
+                  "u_yObjPos = %f \n");
             savePNG(outputTex, IMAGE_W, IMAGE_H, "../output/activeFrame.png"); //todo izpisi vse parametre za sliko
+        }
+
 
         // ── FIX 1: set compute uniforms while computeProg is active ──
         // glUniform* writes into whichever program is currently bound.

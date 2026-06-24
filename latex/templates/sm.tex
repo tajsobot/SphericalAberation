@@ -1,0 +1,444 @@
+\documentclass[a4paper,12pt]{article}
+
+\usepackage{float}
+\usepackage{upgreek}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage[a4paper, margin=2.5cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}   % Latin Modern font with extended characters
+\usepackage{fontspec}
+\usepackage[numbers]{natbib}
+
+\renewcommand{\figurename}{Slika}
+
+\begin{document}
+
+    \begin{titlepage}
+        \begin{center}
+            \includegraphics[width=4cm]{slike/fnm} \\[1.5cm]
+            {\LARGE \textbf{Vračanje iz vesolja}} \\[1cm]
+            {\small Seminarska naloga pri predmetu Sistemsko mišljenje} \\[1cm]
+
+            {\Large Avtor: Taj Šobot} \\[0.5cm]
+            {\Large Mentor: doc. Dr. Vladimir Grubelnik} \\[1.5cm]
+            \date{18. 6. 2025}
+        \end{center}
+    \end{titlepage}
+
+    \flushleft
+
+    \pagebreak
+    \renewcommand{\contentsname}{Kazalo}
+    \tableofcontents{}
+    \pagebreak
+    \section{Uvod}
+    Vračanje iz vesolja oziroma orbite je zanimiv izziv.
+    Da se iz vesolja varno vrnemo, mora vesoljsko plovilo vso kinetično in potencialno energijo, ki jo je pridobilo pri vzletu, izgubiti.
+    Da porabimo najmanj goriva, ne bomo plovilo v celoti upočasnjevali z motorji.
+    Z malim manevrom bomo vesoljsko plovilo poslali v atmosfero.
+    Takrat na plovilo začne delovati sila upora, ki nam do površja zmanjša hitrost tako, da z uporabo padal lahko varno pristanemo.
+    Plovilo se začne bistveno segrevati, saj se skoraj vsa kinetična in potencialna energija spremeni v toploto.
+    V tej seminarski nalogi se s problemom segrevanja plovila ne bomo ukvarjali, temveč bomo samo modelirali dinamiko sistema.
+    Bolj natančneje se bomo osredotočali na sile, ki delujejo na plovilo in kako bodo razne začetne konfiguracije plovila imele vpliv na trajektorijo.
+
+    \section{Matematični model}
+    \subsection{Opis raziskovalnega problema}
+    Modeliral bomo plovilo po kapsuli, ki je astronavte misij Apollo vrnila na Zemljo (običajno imenovan: "komandni modul").
+    Naše plovilo se bo na začetku nahajalo v nizki Zemeljski orbiti blizu orbite Mednarodne vesoljske postaje.
+    Plovilo se bo potem upočasnilo ($150 \frac{m}{s}$), tako da bo tirnica segala v gostejšo atmosfero.
+    Zanima nas, kako se bo spreminjal pospešek, ki bo deloval na plovilo in kako bo ta odvisen od vpadnega kota plovila.
+    Ker je plovilo namenjeno za prenos astronavtov, je dobro vedeti, kakšen g bojo naši astronavti čutili pri vračanju.
+    Pričakujemo, da pri večjih vpadnih kotih (plovilo usmerjeno navzgor – vzgon usmerjen navzgor), bo plovilo dlje časa letelo v višji atmosferi, kjer je zrak bolj redek.
+    Tako bomo izgubljali hitrost počasneje in v daljšem časovnem obdobju.
+    To nam posledično zmanjša pospešek, ki bo deloval na plovilo in astronavte.
+    Na koncu leta bo plovilo na določeni višini odprlo padalo, ki bo dokončno ustavilo plovilo, ter zagotovilo varen pristanek.
+
+    \subsection{Spremenljivke in enačbe}
+    Simulacija vključuje določene omejitve, pri tem pa bomo upoštevali naslednje predpostavke:
+    \begin{enumerate}
+        \item Simulacija poteka v dvodimenzionalnem (2D) kartezičnem koordinatnem sistemu.
+        \item Središče Zemlje je postavljeno v izhodišče koordinatnega sistema, to je $(0, 0)$.
+        \item Zemlja je modelirana kot popolnoma okrogla in negibna, z vidika severnega pola, pri čemer se vrti v nasprotni smeri urinega kazalca.
+        \item Vrtenje Zemlje je upoštevano s kotno hitrostjo zraka $2\pi$ na dan pri izračunu upora.
+        \item Plovilo se giblje v ravnini ekvatorja.
+        \item Za izračun zračnega upora in vzgona uporabljam kvadratni zakon, pri čemer koeficienta upora in vzgona ostajata konstantna.
+        \item Modeliran je le sistem plovilo-Zemlja, brez vpliva Lune ali drugih nebesnih teles.
+        \item Plovilo ohranja svojo orientacijo na smer vektorja hitrosti, ne vrti se okoli osi in ne spreminja velikost vpadnega kota na smer vektorja hitrosti.
+    \end{enumerate}
+
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.7\textwidth]{slike/Slika1}
+        \caption{Shema sistema planet-plovilo}
+        \label{fig:Slika1}
+    \end{figure}
+    Koordinatni sistem je kartezični in je postavljen v opazovalni sistem ozadja oziroma vesolja, koordinatni sistem je neodvisen od postavitve planeta.
+    V simulaciji so obravnavane naslednje spremenljivke: položaj plovila, hitrost plovila, pospešek plovila ter sile, ki delujejo nanj.
+    Položaj planeta (Zemlje) je definiran z uporabo krajevnega vektorja, ki je postavljen v izhodišče koordinatnega sistema:
+    \[
+        \vec{r}_z = (0, 0).
+    \]
+
+    Položaj plovila je izražen s krajevnim vektorjem, katerega začetna vrednost je poljubno določena:
+    \[
+        \vec{r}_p.
+    \]
+
+    Hitrost plovila je podana kot odvod krajevnega vektorja po času, pri čemer je začetna vrednost tudi poljubno izbrana:
+    \[
+        \vec{v}_p = \frac{d\vec{r}_p}{dt}.
+    \]
+
+    Pospešek plovila je definiran kot odvod vektorja hitrosti po času:
+    \[
+        \vec{a}_p = \frac{d\vec{v}_p}{dt}.
+    \]
+
+    Pospešek je izračunan z drugim Newtonovim zakonom:
+    \[
+        \sum \vec{F} = m \vec{a}.
+    \]
+
+    \( \sum \vec{F} \) predstavlja vsoto vseh sil, ki delujejo na plovilo, \( m \)pa je masa plovila.
+
+    Vsota vseh sil je sestavljena iz sile gravitacije $\vec{F_g}$, sile upora $\vec{F_U}$ in sile vzgona $\vec{F_V}$.
+    Lahko zapišemo:
+    \[
+        \sum \vec{F} = \vec{F_g} + \vec{F_U} + \vec{F_V} = m \vec{a}.
+    \]
+
+    Sila gravitacije je izračunana preko Newtonovega zakona gravitacije, kjer je $G$ gravitacijska konstanta,
+    $m_1$ in $m_2$ sta masa planeta in masa plovila, $r$ je oddaljenost plovila od centra planeta in $\hat{r_0}$
+    enotski vektor, izračunan kot: $\hat{r_0} = \frac{\vec{r_P} - \vec{r_Z}}{|\vec{r_P} - \vec{r_Z}|}$.
+    Ker je v našem primeru $\vec{r_Z} = (0,0)$, lahko zapišemo  $\hat{r_0} = \frac{\vec{r_P}}{|\vec{r_P}|}$
+    \[
+        \vec{F_g} = -G \frac{m_1 m_2}{r^2} \hat{r_0}.
+    \]
+
+    Sila upora se izračuna sledeče:
+    \[
+        \vec{F_U} = -\frac{1}{2} \rho(h) S C_U |\vec{v}_{\text{rel}}|^2 \hat{v}_{\text{rel}}.
+    \]
+
+    Sila vzgona pa se izračuna sledeče:
+    \[
+        \vec{F_V} = \frac{1}{2} \rho(h) S C_V * \alpha |\vec{v}_{\text{rel}}|^2 \hat{v}_{\text{rel,rot90}}.
+    \]
+
+    Iz tega sledi:
+    \[
+        \frac{|\vec{F_V}|}{|\vec{F_U}|} = \frac{C_U}{C_V}*\alpha
+    \]
+
+    \begin{itemize}
+        \item \( \rho(h) \) – funkcija gostote zraka z višino od površja Zemlje ($h = |\vec{r_P}| - polmer zemlje $).
+        \item \( S = S_0 \cos(\alpha) \) – čelni presek glede na vpadni kot \(-30^\circ < \alpha < 30^\circ \),
+        \item \( C_u \) – koeficient upora,
+        \item \( C_v \) – koeficient vzgona (na $^\circ $ kota $\alpha$),
+        \item \( \vec{v}_{\text{rel}} = \vec{v}_{\text{p}} + \vec{v}_{\text{zraka}} \) – relativna hitrost plovila glede na zrak,
+        \item \(  \hat{v}_{\text{rel,rot90}} \) – enotski vektor relativne hitrosti plovila glede na zrak zavrten za $90^\circ$ (določi smer sile vzgona).
+    \end{itemize}
+
+    Funkcijo $\rho(h)$ je težko modelirati, zato smo uporabili že obstoječ model imenovan NRLMSISE-00 (več na\cite{fig:vir5}),
+    ki nam poda gostoto zraka kot funkcija nadmorske višine.
+    Bolj specifično smo model konfigurirali, da nam vrne gostoto zraka na dani višini na ekvatorju ob 12:00 na dan 21. marec.\\
+    Graf funkcije $\rho(h)$ \ref{fig:GrafRoH}:
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{slike/Gostota}
+        \caption{Graf gostote zraka v odvisnosti od vi šine}
+        \label{fig:GrafRoH}
+    \end{figure}
+
+    Na sledeči sliki imamo diagram sil \( \vec{F_g} + \vec{F_u} + \vec{F_v} \), ki delujejo na naš sistem plovila.
+    Kot $\alpha$ je v Sliki\ref{fig:Slika2} pozitiven (navzgor obrnjen).
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{slike/slika2NOVA}
+        \caption{Shema sistema plovila}
+        \label{fig:Slika2}
+    \end{figure}
+    Kapsula bo "držala" plovilo pod kotom $\alpha$ na vektor relativne hitrosti skozi celoten let.
+    Kot $\alpha$ omejimo na: $0^\circ < \alpha < 30^\circ$.
+
+    \subsection{Konstante}
+    Konstante uporabljene v simulaciji so:
+    \begin{itemize}
+        \item gravitacijska konstanta $G = 6.6743\times10^{-11}$,
+        \item masa Zemlje $M_1 = 5.972\times10^{24} kg$,
+        \item polmer Zemlje $r_z = 6.371\times10^{6} m$,
+        \item kotna hitrost Zemlje $\omega = 7.2921159\times10^{-5} 1/s$.
+    \end{itemize}
+    V simulaciji imam še druge konstante, ki se lahko poljubno nastavijo (ponavadi začetni pogoji):
+    \begin{itemize}
+        \item masa plovila,
+        \item začetna pozicija plovila,
+        \item začetna hitrost plovila,
+        \item površina plovila,
+        \item koeficient upora,
+        \item vpadni kot.
+    \end{itemize}
+    Vse ostale kostnate povezane z atmosfero, vsebuje jih model NRLMSISE-00\cite{fig:vir5} in se z njimi ne bom posredno ukvarjal.
+
+    \section{Simulacija}
+    \subsection{Začetni pogoji}
+    Začetni pogoji pozicije in hitrosti bojo navedene pri vsaki posamezni simulaciji v poglavju "Rezultati".
+    Za parametre plovila pa bojo vedno isti in sledeči.
+    \subsubsection{Parametri plovila}
+    Parametre plovila sem nastavil na:
+    \begin{itemize}
+        \item masa plovila $m = 5806 kg$,
+        \item površina plovila $S_0 = 12.0 m^2$,
+        \item koeficient upora $C_U = 1.2$,
+        \item koeficient vzgona (na $1^\circ$ kota) $C_V = 0.011$,
+        \item površina padala $S_{padala} = 1524.0 m^2$,
+        \item koeficient upora padala $C_{padala} = 0.9$.
+
+    \end{itemize}
+    Podatki o parametrih plovila so bili pridobljeni iz javno dostopnih virov, vključno z dokumentacijo NASA in spletnimi enciklopedijami, kot je Wikipedija.
+    Koeficienta upora in vzgona sem pridobil iz virov:~\cite{fig:vir3},\cite{fig:vir4},\cite{fig:vir6}.
+    V teh virih je navedenih več različnih koeficientov, saj se pri nadzvočnih hitrostih te začnejo nezanemarljivo spreminjati.
+    Ker je izmerjen koeficient upora bil med $1.0$ in $1.4$, smo uporabili približno povprečno vrednost $1.2$.
+    Koeficient vzgona je bil pri $30^\circ$ med $0.30$ in $0.35$, zato sem uporabil približno vrednost $0.33$, torej $0.011$ na $1^\circ$ kota.
+
+
+    \subsubsection{Izbira vhodnih podatkov}
+    Za modeliranje smo izbrali kapsulo Apollo, čeprav ta ni več v uporabi.
+    Razlog za to izbiro je obsežna razpoložljivost zgodovinskih podatkov, dokumentacije in rezultatov testiranj, ki so javno dostopni.
+    Kapsula Apollo je primer plovila, zasnovanega za vračanje iz luninih orbit, hkrati pa je bila uporabljena tudi za misije v nizki zemeljski orbiti.
+    Zaradi bogatega nabora podatkov o letih je mogoče rezultate simulacije neposredno primerjati z realnimi podatki, kar povečuje zanesljivost modela.
+    To omogoča, da bomo z enakim modelom lahko simuliral tudi druge kapsule – z zgolj prilagoditvijo začetnih parametrov plovila – in pri tem zagotovili robustnost in natančnost modela.
+
+    \subsubsection{Numerična integracija in implementacija}
+    Za numerični integrator smo uporabil Eulerjevo metodo s časovnim korakom $\Delta t = 0,01 \, \text{s}$.
+    Simulacijo smo implementirali v programskem jeziku C++, za vizualizacijo rezultatov in izdelavo grafov pa smo uporabili Python z knjižnico Matplotlib.
+    Simulacija se zaključi, ko plovilo doseže tla ali ko je dosežen prednastavljen najdaljši čas izvajanja.
+    Model omogoča prilagoditev za simulacijo drugih pogojev, kot so vračanja iz višjih orbit, eliptičnih orbit (npr. z Lune) ali hiperboličnih orbit.
+
+    \subsection{Konec simulacije}
+    Ko plovilo doseže nadmorsko višino 3000 m, se aktivira padalo.
+    Padalo je modelirano tako, da se površina plovila v 10 sekundah postopno poveča od začetne vrednosti (površina plovila) do končne vrednosti (površina plovila in padala).
+    To je doseženo z linearno interpolacijo površine v časovnem intervalu 10 s.
+    Simulacija se zaključi, ko plovilo doseže nadmorsko višino 0 m.
+
+    \subsection{Robni pogoji}
+    Numerični model vsebuje določene omejitve.
+    V simulaciji so vse spremenljivke shranjene v podatkovnem tipu \texttt{double}, ki zagotavlja natančnost približno \(\pm 2,2 \times 10^{-16}\).
+    Ta omejitev lahko povzroči kumulativne zaokrožitvene napake, zlasti pri dolgotrajnih simulacijah ali ob hitrih spremembah sil.
+    Te napake so bile upoštevane pri izbiri časovnega koraka \(\Delta t = 0,01 \, \text{s}\).
+    Za večjo natančnost bi lahko uporabili višjeredne integracijske metode, kot je Runge-Kutta, ali še dodatno zmanjšali časovni korak.
+    Začetne vrednosti in konstante, kot so masa plovila in gravitacijska konstanta, so bile izbrane tako, da čim bolj zmanjšajo vpliv zaokrožitvenih napak, vendar lahko v izračunih tira in pospeškov še vedno pride do manjših odstopanj.
+
+    Simulacija vključuje tudi nekatere singularnosti, ki lahko povzročijo deljenje z nič.
+    Pri računanju gravitacijske sile je treba pozornost nameniti majhnim razdaljam, saj te povzročajo izjemno velike sile, kar vodi do numeričnih napak in nerealističnih rezultatov.
+
+    Ker je planet v modelu obravnavan kot točka, simulacija v vsakem primeru ni smiselna, če se plovilo nahaja pod površjem planeta (pod nadmorsko višino 0 m).
+
+    \pagebreak
+    \section{Rezultati}
+    \subsection{Vračanje iz nizkozemeljske orbite}
+    Plovilo smo postavili v krožno orbito na višino 410 km in s hitrostjo 7667 $\frac{m}{s}$.
+    Ta je podobna orbiti Mednarodne vesoljske postaje.
+    Nato smo hitrost zmanjšali za 150 $\frac{m}{s}$, kar je postavilo plovilo v eliptično orbito, katere perigeja (najnižja točka orbite) sega v atmosfero.
+    Simulacijo je bila zagnana za vpadne kote $\alpha$ od $0^\circ$ do $30^\circ$ po korakih $5^\circ$.
+    Začetni pogoji (vektorji pozicije in hitrosti) so:
+    \begin{itemize}
+        \item začetna pozicija plovila $\vec{r_{p0}} = [r_z + 410 000m, 0m]$,
+        \item začetna hitrost plovila $\vec{v_{p0}} = [0\frac{m}{s}, 7517\frac{m}{s}] $.
+    \end{itemize}
+    Slika~\ref{fig:graf1}, prikazuje graf tira, po katerem je naše plovilo potovalo (odvisnost x od y).
+    V vseh grafih barvne poti označujejo posamezne tire pri različnih kotih.
+    Siv krog pa v tem grafu predstavlja zemljino površje.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1.0\textwidth]{slike/Graf1}
+        \caption{Graf $x(y)$ pri različnih $\alpha$}
+        \label{fig:graf1}
+    \end{figure}
+
+    Slika~\ref{fig:graf2}, prikazuje graf višine nad površjem zemlje v odvisnosti od časa.
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1.0\textwidth]{slike/Graf2}
+        \caption{Graf $h(t)$ pri različnih $\alpha$}
+        \label{fig:graf2}
+    \end{figure}
+
+    Slika~\ref{fig:graf3}, prikazuje graf magnitude hitrosti (relativno na koordinatni sitem) v odvisnosti od časa.
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1.0\textwidth]{slike/Graf3}
+        \caption{Graf $|\vec{v_p}|(t)$ pri različnih $\alpha$}
+        \label{fig:graf3}
+    \end{figure}
+
+    Slika~\ref{fig:graf5}, prikazuje graf magnitude hitrosti (relativno na površino zemlje) v odvisnosti od časa.
+    Zdelo se mi je pomembno tudi ponazoriti hitrost plovila relativnega na tla, saj je pri pristanku dobro vedeti svojo hitrost.
+    V našem primeru plovilo ne preseže 5 $\frac{m}{s}$.
+    Plovilo je namenjeno za pristajanje na vodi, zato je ta vrednost sprejemljiva.
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1.0\textwidth]{slike/Graf5}
+        \caption{Graf $| \vec{v_{pt}}|(t)$ pri različnih $\alpha$}
+        \label{fig:graf5}
+    \end{figure}
+
+    Slika~\ref{fig:graf4}, prikazuje graf magnitude pospeška v odvisnosti od časa.
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1.0\textwidth]{slike/Graf4}
+        \caption{Graf $|\vec{a_p}|(t)$ pri različnih $\alpha$}
+        \label{fig:graf4}
+    \end{figure}
+    Iz grafa pospeška lahko odčitamo, da je plovilo, ki je imelo največji vpadni kot ($30^\circ$), doživelo najmanjši maksimalni pospešek okoli $2g$.
+    Plovilo z najmanjšim ($0^\circ$) pa največji, ta je imel maksimalni pospešek $8g$.
+    Drugi narastek pospeška je zaradi odpiranja padala tik pred pristankom, kjer pospešek ne naraste do $5g$.
+    Med realnim letom vpadni kot ni konstanten, saj imajo prava plovila navigacijske računalnike in ljudi, ki lahko spreminjajo orientacijo plovila med letom.
+    Ponavadi ta nadzoruje vpadni kot tako, da kapsula pride v določeno pristajalno območje, hkrati pa ohranja varne temperaturne razmere.
+    Pri standardnem vračanju iz nizko zemeljske orbite astronavti doživijo med $2g$ do $4g$.
+    Naši rezultati se ujemajo z realnimi pogoji.
+
+    \subsection{Vračanje iz lunine orbite}
+    Začetni pogoji:
+    \begin{itemize}
+        \item začetna pozicija plovila $\vec{r_{p0}} = [r_z + 400 000 000m, 0m]$,
+        \item začetna hitrost plovila $\vec{v_{p0}} = [0\frac{m}{s}, 175\frac{m}{s}] $,
+    \end{itemize}
+    Te smo izbrali tako da smo plovilo nastavili na (približno) višino lunine orbite in spreminjali hitrost, dokler trajektorija ni zadela zemljine atmosfere.
+
+    Slika~\ref{fig:graf8}, prikazuje graf tira zelo eliptične orbite (iz lune).
+    Slika~\ref{fig:graf8Z}, pa približan graf.
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1.0\textwidth]{slike/LUNA0Graf1}
+        \caption{Graf $x(y)$ pri različnih $\alpha$}
+        \label{fig:graf8}
+    \end{figure}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1.0\textwidth]{slike/LUNA0Graf1Z}
+        \caption{Graf $x(y)$ pri različnih $\alpha$}
+        \label{fig:graf8Z}
+    \end{figure}
+    Kot lahko vidimo smo plovilo poslali mimo atmosfere (a še vedno dovolj blizu, da opazimo njen efekt).
+    Zmanjšajmo velikost začetne hitrosti za ($-0,5 \frac{m}{s}$):
+
+    Spremenjeni parametri:
+    \begin{itemize}
+        \item začetna pozicija plovila $\vec{r_{p0}} = [r_z + 400 000 000m, 0m]$,
+        \item začetna hitrost plovila $\vec{v_{p0}} = [0\frac{m}{s}, 174,5\frac{m}{s}] $,
+    \end{itemize}
+
+    Slika~\ref{fig:graf9}, prikazuje graf tira zelo eliptične orbite (iz lune).
+    Slika~\ref{fig:graf9Z}, pa približan graf.
+    Slika~\ref{fig:graf9ZZ}, pa še bolj približan graf.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1.0\textwidth]{slike/LUNA05Graf1}
+        \caption{Graf $x(y)$ pri različnih $\alpha$}
+        \label{fig:graf9}
+    \end{figure}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1.0\textwidth]{slike/LUNA05Graf1Z}
+        \caption{Graf $x(y)$ pri različnih $\alpha$}
+        \label{fig:graf9Z}
+    \end{figure}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1.0\textwidth]{slike/LUNA05Graf1ZZ}
+        \caption{Graf $x(y)$ pri različnih $\alpha$}
+        \label{fig:graf9ZZ}
+    \end{figure}
+    Kot lahko vidimo so se nekatera plovila "odbila" od atmosfere druga pa je že takoj potegnilo do površja.
+    To pomeni, da nekatera plovila vstopajo v atmosfero več kot enkrat, kar v pravi odpravi ne bi bilo zaželeno.
+    
+    \vspace{1cm}
+
+    Gremo še malo zmanjšati velikost začetne hitrosti ($-0,5 \frac{m}{s}$):
+
+    Spremenjeni parametri:
+    \begin{itemize}
+        \item začetna pozicija plovila $\vec{r_{p0}} = [r_z + 400 000 000m, 0m]$,
+        \item začetna hitrost plovila $\vec{v_{p0}} = [0\frac{m}{s}, 174\frac{m}{s}] $,
+    \end{itemize}
+
+    Slika~\ref{fig:graf10}, prikazuje graf tira zelo eliptične orbite (iz lune).
+    Slika~\ref{fig:graf10Z}, pa približan graf.
+    Slika~\ref{fig:graf10ZZ}, pa še bolj približan graf.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1.0\textwidth]{slike/LUNA1Graf1}
+        \caption{Graf $x(y)$ pri različnih $\alpha$}
+        \label{fig:graf10}
+    \end{figure}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1.0\textwidth]{slike/LUNA1Graf1Z}
+        \caption{Graf $x(y)$ pri različnih $\alpha$}
+        \label{fig:graf10Z}
+    \end{figure}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1.0\textwidth]{slike/LUNA1Graf1ZZ}
+        \caption{Graf $x(y)$ pri različnih $\alpha$}
+        \label{fig:graf10ZZ}
+    \end{figure}
+
+    Zdaj pa lahko vidimo, da vse trajektorije končajo na Zemljinem površju po prvem vstopu v atmosfero.
+
+
+    \pagebreak
+    \section{Zaključek}
+    V tej seminarski nalogi sem ustvaril model za simulacijo vračanja vesoljskega plovila, modeliranega po Apollo kapsuli, od različnih Zemeljskih orbit do površja
+    Osredotočili smo se na dinamiko sistema, zlasti na sile, ki delujejo na plovilo (gravitacijo, zračni upor in vzgon), ter na vpliv vpadnega kota $\alpha$ na trajektorijo, hitrost in pospešek.
+    Rezultati pokažejo, da večji vpadni koti zmanjšajo maksimalne pospeške, kar zmanjšuje obremenitve na astronavte in plovila.
+    Pri velikih hitrostih in pravih trajektorijah smo opazili tudi "odbitek" od atmosfere zaradi vzgona, ki je deloval na plovilo.
+    V modelu smo uporabili Newtonov zakon gravitacije, kvadratni zakon zračnega upora in vzgona, ter obstoječi atmosferski model NRLMSISE-00\cite{fig:vir5} za določanje gostote zraka.
+    Simulacija ima omejitve in poenostavitve: dvodimenzionalni sistem, konstantna koeficienta upora in vzgona ter zanemarjanje termalnih učinkov in vpliva drugih nebesnih teles.
+    V prihodnje bi lahko nadgradil model, da bi vseboval še temperaturo plovila, ter različne načine, kako se ščititi pred prevelikim segrevanjem.
+    Lahko bi tudi iskal bolj optimalne poti skozi višjo atmosfero z aktivno kontrolo kapsule.
+    Prostor bi lahko nadgradil z dodatno dimenzijo, lahko bi vpeljal bolj kompleksne vremenske pojave ipd.
+    V prihodnosti nameravam nadgraditi model še z uporabo 3d koordinatnega sistema in Runge-Kutta integracijske metode.
+
+
+    \pagebreak
+    \section{Viri}
+    \begin{thebibliography}{9}
+        \bibitem[1]{fig:vir1}
+        Wikipedia, Apollo command and service module. \\
+        Dostopno na: \url{https://en.wikipedia.org/wiki/Apollo_command_and_service_module} (2025)
+        \vspace{1cm}
+
+        \bibitem[2]{fig:vir2}
+        W. David Woods, Kenneth D. MacTaggart, and Frank O'Brien, Apollo 11 Day 9, part 2: Entry and Splashdown. \\
+        Dostopno na: \url{https://www.nasa.gov/history/afj/ap11fj/27day9-entry.html} (2025)
+        \vspace{1cm}
+
+        \bibitem[3]{fig:vir3}
+        Johnson, Breanna J., Mid-Lift-To-Drag Ratio Rigid Vehicle 6-DOF EDL Performance Using Tunable Apollo Powered Guidance. \\
+        Dostopno na: \url{https://ntrs.nasa.gov/citations/20200001595} (2025)
+        \vspace{1cm}
+
+        \bibitem[4]{fig:vir4}
+        Hillje, Ernest R., ``Entry Aerodynamics at Lunar Return Conditions Obtained from the Flight of Apollo 4 (AS-501),'' NASA TN D-5399, (1969). \\
+        Dostopno na: \url{https://ntrs.nasa.gov/api/citations/19690029435/downloads/19690029435.pdf} (2025)
+        \vspace{1cm}
+
+        \bibitem[5]{fig:vir5}
+        Wikipedia, NRLMSISE-00. \\
+        Dostopno na: \url{https://en.wikipedia.org/wiki/NRLMSISE-00} (2025)
+
+        \bibitem[6]{fig:vir6}
+        Gary Johnson, Blunt Capsule Drag Data. \\
+        Dostopno na: \url{https://exrocketman.blogspot.com/2012/08/blunt-capsule-drag-data.html} (2025)
+
+    \end{thebibliography}
+
+\end{document}
