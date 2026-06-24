@@ -28,3 +28,4 @@
 \contentsline {subsection}{\numberline {7.6}Peti render}{12}{subsection.7.6}%
 \contentsline {section}{\numberline {8}Zaključek}{13}{section.8}%
 \contentsline {section}{\numberline {9}Viri}{14}{section.9}%
+\contentsline {subsection}{\numberline {9.1}Koda}{14}{subsection.9.1}%

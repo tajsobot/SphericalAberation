@@ -5,9 +5,8 @@
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
-// add at top
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"   // same vendor folder, grab from github.com/nothings/stb
+#include "stb_image.h"   // grab from github.com/nothings/stb
 
 #include <iostream>
 #include <fstream>
@@ -189,7 +188,6 @@ int main() {
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
     savePNG(outputTex, IMAGE_W, IMAGE_H, "../output/firstFrame.png");
 
-    //                            u_a je v neskoncnosti zaradi paralelnih zarkov!!!
     float u_r = 1.0f, u_n = 1.2f, u_a = 10.0f, u_b = 5.0f, u_xLensPos = 0.0f, u_yLensPos = 0.0f, u_xObjPos = 0.0f, u_yObjPos = 0.0f, u_ObjScale = 1.0f;
 
     while (!glfwWindowShouldClose(window)) {
@@ -235,9 +233,6 @@ int main() {
             );
         }
 
-        // ── FIX 1: set compute uniforms while computeProg is active ──
-        // glUniform* writes into whichever program is currently bound.
-        // All compute uniforms must be set before dispatching computeProg.
         glBindImageTexture(0, outputTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
         glUseProgram(computeProg);
         glUniform1f(glGetUniformLocation(computeProg, "u_r"), u_r);
@@ -253,8 +248,6 @@ int main() {
 
         glUniform2f(glGetUniformLocation(computeProg, "u_resolution"), IMAGE_W, IMAGE_H);
 
-        // ── FIX 2: actually dispatch the compute shader each frame ──
-        // Without this call the uniforms above are uploaded but nothing runs —
         // outputTex never updates and you just keep seeing the initial frame.
         glDispatchCompute(IMAGE_W / LOCAL_SIZE, IMAGE_H / LOCAL_SIZE, 1);
 
@@ -286,19 +279,12 @@ int main() {
         }
         glViewport(vpX, vpY, vpW, vpH);
 
-        // ── FIX 3: bind textures to their correct units before setting uniforms ──
-        // glActiveTexture + glBindTexture must be called in order — the active unit
-        // at the time of glBindTexture determines which slot the texture lands in.
-        // inputTex goes to unit 1, outputTex to unit 0.
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, inputTex);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, outputTex);
 
-        // ── FIX 1 (continued): set quad uniforms while quadProg is active ──
-        // u_input was previously being set against computeProg (wrong program).
-        // Switch to quadProg first, then upload both sampler uniforms.
         glUseProgram(quadProg);
         glUniform1i(glGetUniformLocation(quadProg, "u_tex"),   0); // outputTex on unit 0
         glUniform1i(glGetUniformLocation(quadProg, "u_input"), 1); // inputTex  on unit 1

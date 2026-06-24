@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Arch Linux) (preloaded format=pdflatex 2026.6.24)  24 JUN 2026 15:42
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Arch Linux) (preloaded format=pdflatex 2026.6.24)  24 JUN 2026 15:56
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -532,8 +532,8 @@ been already used, duplicate ignored
                    \relax 
 l.49 
       [1]
-LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 8
-9.
+LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 9
+1.
  (/usr/share/texmf-dist/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) [2{/usr/share/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{/usr/share/texmf-d
@@ -547,54 +547,54 @@ File: lstlang1.sty 2025/11/14 1.11b listings language file
 File: lstmisc.sty 2025/11/14 1.11b (Carsten Heinz)
 )
 Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on i
-nput line 255.
+nput line 258.
 LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 2
-55.
+58.
 
 (/usr/share/texmf-dist/tex/latex/lm/t1lmtt.fd
 File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) [5] [6]
-<img/pi.png, id=271, 240.9pt x 240.9pt>
+<img/pi.png, id=276, 240.9pt x 240.9pt>
 File: img/pi.png Graphic file (type png)
 <use img/pi.png>
-Package pdftex.def Info: img/pi.png  used on input line 369.
+Package pdftex.def Info: img/pi.png  used on input line 372.
 (pdftex.def)             Requested size: 318.66948pt x 318.6984pt.
-<img/ozadje.png, id=273, 1027.84pt x 1027.84pt>
+<img/ozadje.png, id=278, 1027.84pt x 1027.84pt>
 File: img/ozadje.png Graphic file (type png)
 <use img/ozadje.png>
-Package pdftex.def Info: img/ozadje.png  used on input line 377.
+Package pdftex.def Info: img/ozadje.png  used on input line 380.
 (pdftex.def)             Requested size: 318.66948pt x 318.67416pt.
  [7 <./img/pi.png>]
-<img/render1.png, id=282, 1027.84pt x 1027.84pt>
+<img/render1.png, id=287, 1027.84pt x 1027.84pt>
 File: img/render1.png Graphic file (type png)
 <use img/render1.png>
-Package pdftex.def Info: img/render1.png  used on input line 398.
+Package pdftex.def Info: img/render1.png  used on input line 401.
 (pdftex.def)             Requested size: 318.66948pt x 318.67416pt.
 
 [8 <./img/ozadje.png>]
-<img/render2.png, id=299, 1027.84pt x 1027.84pt>
+<img/render2.png, id=304, 1027.84pt x 1027.84pt>
 File: img/render2.png Graphic file (type png)
 <use img/render2.png>
-Package pdftex.def Info: img/render2.png  used on input line 418.
+Package pdftex.def Info: img/render2.png  used on input line 421.
 (pdftex.def)             Requested size: 318.66948pt x 318.67416pt.
  [9 <./img/render1.png>]
-<img/render3.png, id=316, 1027.84pt x 1027.84pt>
+<img/render3.png, id=321, 1027.84pt x 1027.84pt>
 File: img/render3.png Graphic file (type png)
 <use img/render3.png>
-Package pdftex.def Info: img/render3.png  used on input line 438.
+Package pdftex.def Info: img/render3.png  used on input line 441.
 (pdftex.def)             Requested size: 318.66948pt x 318.67416pt.
  [10 <./img/render2.png>]
-<img/render4.png, id=333, 1027.84pt x 1027.84pt>
+<img/render4.png, id=338, 1027.84pt x 1027.84pt>
 File: img/render4.png Graphic file (type png)
 <use img/render4.png>
-Package pdftex.def Info: img/render4.png  used on input line 458.
+Package pdftex.def Info: img/render4.png  used on input line 461.
 (pdftex.def)             Requested size: 318.66948pt x 318.67416pt.
 
 [11 <./img/render3.png>]
-<img/render5.png, id=350, 1027.84pt x 1027.84pt>
+<img/render5.png, id=355, 1027.84pt x 1027.84pt>
 File: img/render5.png Graphic file (type png)
 <use img/render5.png>
-Package pdftex.def Info: img/render5.png  used on input line 478.
+Package pdftex.def Info: img/render5.png  used on input line 481.
 (pdftex.def)             Requested size: 318.66948pt x 318.67416pt.
  [12 <./img/render4.png>] [13 <./img/render5.png>]
 [14] (./sf.aux)
@@ -603,13 +603,13 @@ LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
  ***********
 Package rerunfilecheck Info: File `sf.out' has not changed.
-(rerunfilecheck)             Checksum: 769AE1850DB3C2B634ACB9F12BCBAE65;4291.
+(rerunfilecheck)             Checksum: 57E79D45DE5984C556292D0F406C372A;4369.
  ) 
 Here is how much of TeX's memory you used:
- 13323 strings out of 469515
- 195302 string characters out of 5470807
- 1033454 words of memory out of 5000000
- 41615 multiletter control sequences out of 15000+600000
+ 13325 strings out of 469515
+ 195332 string characters out of 5470807
+ 1033458 words of memory out of 5000000
+ 41616 multiletter control sequences out of 15000+600000
  680156 words of font info for 76 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  75i,10n,79p,302b,2042s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -622,10 +622,10 @@ share/texmf-dist/fonts/type1/public/lm/lmri12.pfb></usr/share/texmf-dist/fonts/
 type1/public/lm/lmsy10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmsy8.p
 fb></usr/share/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></usr/share/texmf-di
 st/fonts/type1/public/lm/lmtt12.pfb>
-Output written on sf.pdf (15 pages, 718409 bytes).
+Output written on sf.pdf (15 pages, 719202 bytes).
 PDF statistics:
- 481 PDF objects out of 1000 (max. 8388607)
- 419 compressed objects within 5 object streams
- 174 named destinations out of 1000 (max. 500000)
- 276 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 487 PDF objects out of 1000 (max. 8388607)
+ 425 compressed objects within 5 object streams
+ 175 named destinations out of 1000 (max. 500000)
+ 284 words of extra memory for PDF output out of 10000 (max. 10000000)
 

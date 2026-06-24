@@ -29,7 +29,7 @@
     \begin{titlepage}
         \begin{center}
             \vspace*{3cm}
-            {\LARGE \textbf{Sferična aberacija sferičnih leč in raytracing}} \\[1cm]
+            {\LARGE \textbf{Prehod svetlobe skozi sferično lečo in ray tracing}} \\[1cm]
             {\large Seminarska naloga pri predmetu Numerične metode} \\[2cm]
 
             {\Large Avtor: Taj Šobot} \\[0.5cm]
@@ -57,10 +57,12 @@
     Bolj oddaljeni so vpadni žarki od optične osi leče, večji pogrešek imajo.
     Rezultat je popačena slika.
     V inštrumentih kot so kamere in teleskopi, kjer nastopajo sistemi leč pa to prevede v zamegljene in ne ostre slike.
+    Ta seminarska naloga se bo osredotočala samo na sferično aberacijo, ne bo upoštevala kromatske aberacija ter drugih napak pri lečah.\\
+    \vspace{0.5cm}
 
     Lečo bomo modelirali kot krogelno ploskev z določenim lomnim količnikom $n$ in polmerom $r$.
-    Z uporabo metode "ray tracing", bomo simuliral prehod svetlobnih žarkov skozi tako lečo.
-    Uporabljali bomo program napisan v C++ ter knjižnice za izrisovanje imenovano OpenGL.
+    Z uporabo metode ray-tracing, bomo simuliral prehod svetlobnih žarkov skozi tako lečo.
+    Uporabljali bomo program napisan v C++ ter knjižnico za izrisovanje imenovano OpenGL.
 
 
     % ─────────────────────────────────────────────────────────────────────────
@@ -207,6 +209,7 @@
     OpenGL je knjižnica narejena v C, ki nam dovoli enostavnejšo sporazumevanje z grafično procesno enoto
     (ang.\ \emph{Graphics Processing Unit}, GPU).
     Koda za inicializacijo oken, bufferjev, resolucije, IO itd.\ je pretežna, zato ne bo opisana v tej seminarski nalogi.
+    Celoten izpis kode se lahko najde v virih.
     Glavni del pri programiranju grafike je koncept \emph{shaderjev}.
     To so pod-programi napisani v jeziku GLSL (zelo podoben C), ki se zaženejo za vsak piksel na ekranu vzporedno (so neodvisni en od drugega).
     To si lahko predstavljamo, kot da ima vsak piksel svoj programček.
@@ -239,7 +242,7 @@
     Vzporedni žarki simulirajo neskončno oddaljen zaslon.
 
     Pot žarka v realnosti gre od vira svetlobe, zadane sliko, se lomi skozi lečo ter pristane na zaslonu.
-    Pri \emph{ray tracingu} pa to delamo v obratni smeri:
+    Pri \emph{ray tracing-u} pa to delamo v obratni smeri:
     žarek svojo pot začne pri zaslonu, gre skozi lečo do slike, in šele tam dobi svojo barvo.
     S tem smo računalniku prihranili računanje vseh žarkov, ki sploh ne bi zadeli zaslona.
 
@@ -484,7 +487,7 @@ u_ObjScale= 0.200
     \section{Zaključek}
     % ─────────────────────────────────────────────────────────────────────────
 
-    V tej seminarski nalogi smo spoznali metodo "ray tracing" za simulacijo sferične aberacije skozi
+    V tej seminarski nalogi smo spoznali metodo ray tracing za simulacijo sferične aberacije skozi
     sferično lečo.
 
     Pokazali smo, da lahko Snellov zakon zapišemo v vektorski obliki, ki je neposredno uporabna
@@ -496,9 +499,8 @@ u_ObjScale= 0.200
     kar se kaže kot zamegljena in popačena slika. Pri večjem $r$ se žarki zberejo bliže skupaj
     in slika je ostrejša.
 
-    Čeprav je izrisovan ekran bil velik $1024 \times 1024 = 1'048'576$, to pomeni več kot 1 miljon žarkov na sliko je GPU (v našem primeru NVIDIA GeForce RTX 3060 Ti) sliko v povprečju generiral le v 6 milisekundah!
-    Kar nam pove kako učinkovito je vzporedno procesiranje za takšne naloge.
-
+    Čeprav je velikost zaslona bila $1024 \times 1024 = 1'048'576$, to pomeni več kot 1 miljon žarkov na sliko je GPU (v našem primeru NVIDIA GeForce RTX 3060 Ti) sliko v povprečju generiral le v 6 milisekundah!
+    To poudari pomembnost vzporednega procesiranja za takšne naloge.
 
     \pagebreak
     \section{Viri}
@@ -511,5 +513,8 @@ u_ObjScale= 0.200
     \vspace{0.5cm}
     Khronos Group, \textit{OpenGL 4.3 Core Profile Specification}, 2012. \\
     Dostopno na: \url{https://registry.khronos.org/OpenGL/specs/gl/glspec43.core.pdf}\\
+    \vspace{0.5cm}
+    \subsection{Koda}
+    Koda je javno objavljena na GiHub-u, dostopno na: https://github.com/tajsobot/SphericalAberation \\
 
 \end{document}
